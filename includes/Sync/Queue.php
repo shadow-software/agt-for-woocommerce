@@ -113,6 +113,37 @@ final class Queue {
 	}
 
 	/**
+	 * Cancel EVERYTHING this plugin has scheduled — recurring polls and every
+	 * pending per-product job. Used on deactivate and uninstall, so nothing of ours
+	 * keeps firing against American Gun Trader after the plugin is switched off.
+	 *
+	 * Passing no args to as_unschedule_all_actions() cancels every action on the
+	 * hook regardless of its arguments, which is what clears the per-product jobs
+	 * (they carry a product_id + attempt).
+	 *
+	 * @return void
+	 */
+	public static function cancel_all(): void {
+		if ( ! function_exists( 'as_unschedule_all_actions' ) ) {
+			return;
+		}
+
+		$hooks = array(
+			self::HOOK_PUSH,
+			self::HOOK_REMOVE,
+			self::HOOK_RESTORE,
+			self::HOOK_WITHDRAW,
+			self::HOOK_POLL,
+			self::HOOK_TAXONOMY,
+			self::HOOK_BACKFILL,
+		);
+
+		foreach ( $hooks as $hook ) {
+			as_unschedule_all_actions( $hook, array(), self::GROUP );
+		}
+	}
+
+	/**
 	 * Queue a product to be pushed.
 	 *
 	 * @param int $product_id WooCommerce product id.

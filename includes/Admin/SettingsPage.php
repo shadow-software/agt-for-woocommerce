@@ -237,6 +237,10 @@ final class SettingsPage {
 		}
 
 		$changes['category_map'] = $map;
+
+		// The purge flag is a standalone option, not part of the settings blob, so it
+		// is set directly here (uninstall.php reads it in isolation).
+		update_option( 'agt_sync_purge_on_uninstall', isset( $_POST['purge_on_uninstall'] ), false );
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
 
 		Settings::update( $changes );
@@ -660,6 +664,19 @@ final class SettingsPage {
 			'<input type="number" id="agt-batch" name="batch_size" value="%d" min="1" max="50" class="small-text">',
 			esc_attr( (string) Settings::int( 'batch_size' ) )
 		);
+		echo '</td></tr>';
+
+		// Deleting the plugin normally leaves the product<->listing links in place, so
+		// a reinstall picks up where it left off. A merchant who wants a truly clean
+		// removal can opt in here. This is a standalone option (not part of the
+		// settings blob), because uninstall.php reads it in isolation.
+		echo '<tr><th scope="row">' . esc_html__( 'On plugin deletion', 'agt-sync-for-woocommerce' ) . '</th><td>';
+		printf(
+			'<label><input type="checkbox" name="purge_on_uninstall" value="1" %s> %s</label>',
+			checked( (bool) get_option( 'agt_sync_purge_on_uninstall', false ), true, false ),
+			esc_html__( 'Also delete all AGT Sync data (the product-to-listing links and per-product settings)', 'agt-sync-for-woocommerce' )
+		);
+		echo '<p class="description">' . esc_html__( 'Leave this off to keep your links, so reinstalling resumes cleanly. Turning it on never removes anything from American Gun Trader — only this store\'s bookkeeping.', 'agt-sync-for-woocommerce' ) . '</p>';
 		echo '</td></tr>';
 
 		echo '</tbody></table></div>';

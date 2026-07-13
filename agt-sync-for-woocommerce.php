@@ -123,16 +123,44 @@ add_action(
 );
 
 /**
- * Create the sync link table on activation.
+ * Set the plugin up on activation (multisite-aware).
  *
+ * @param bool $network_wide True when activated network-wide.
  * @return void
  */
 register_activation_hook(
 	AGT_SYNC_FILE,
-	static function () {
-		require_once AGT_SYNC_PATH . 'includes/Sync/LinkMap.php';
-		\AgtSync\Sync\LinkMap::install();
+	static function ( $network_wide = false ) {
+		\AgtSync\Lifecycle::activate( (bool) $network_wide );
 	}
+);
+
+/**
+ * On deactivation, stop the plugin DOING anything — cancel every scheduled job so
+ * nothing keeps calling American Gun Trader — but change no data. Reactivating
+ * resumes exactly where the merchant left off.
+ *
+ * @return void
+ */
+register_deactivation_hook(
+	AGT_SYNC_FILE,
+	static function () {
+		\AgtSync\Lifecycle::deactivate();
+	}
+);
+
+/**
+ * A blog added to a network on which the plugin is network-active needs its own
+ * table, or it would be the one site with the plugin "on" and nothing to write to.
+ */
+add_action(
+	'wp_initialize_site',
+	static function ( $new_site ) {
+		if ( $new_site instanceof \WP_Site ) {
+			\AgtSync\Lifecycle::on_new_blog( (int) $new_site->blog_id );
+		}
+	},
+	100
 );
 
 /**

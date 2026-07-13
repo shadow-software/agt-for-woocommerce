@@ -10,6 +10,7 @@ namespace AgtSync;
 use AgtSync\Admin\Notices;
 use AgtSync\Admin\ProductMetaBox;
 use AgtSync\Admin\SettingsPage;
+use AgtSync\Lifecycle;
 use AgtSync\Sync\LinkMap;
 use AgtSync\Sync\Queue;
 
@@ -61,9 +62,11 @@ final class Plugin {
 		$this->queue = new Queue();
 		$this->queue->register();
 
-		// The link table is created on activation, but a plugin updated by hand (or
-		// a multisite blog added later) can miss that.
-		add_action( 'admin_init', array( $this, 'maybe_install_table' ) );
+		// Heal on a normal admin request: the table is created on activation, but a
+		// plugin updated by copying files, a manual DB edit, or a schema bump can
+		// leave it missing or stale. Lifecycle::maybe_heal() is the fast-path check
+		// that quietly repairs it before the merchant ever touches a broken screen.
+		add_action( 'admin_init', array( Lifecycle::class, 'maybe_heal' ) );
 
 		if ( is_admin() ) {
 			( new SettingsPage() )->register();
@@ -213,21 +216,6 @@ final class Plugin {
 				Queue::push( $product_id );
 			}
 		}
-	}
-
-	/**
-	 * Create the link table if it is missing.
-	 *
-	 * @return void
-	 */
-	public function maybe_install_table(): void {
-		if ( get_option( 'agt_sync_db_version' ) === AGT_SYNC_VERSION ) {
-			return;
-		}
-
-		LinkMap::install();
-
-		update_option( 'agt_sync_db_version', AGT_SYNC_VERSION, false );
 	}
 
 	/**
