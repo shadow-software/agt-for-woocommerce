@@ -1,5 +1,13 @@
 # AGT Sync for WooCommerce — Implementation Plan
 
+> **STATUS: Phases 0–7 are built and committed.** Both sides are green:
+> AGT (Rector · Pint · PHPStan L9 · 5,192 Pest tests) and the plugin
+> (PHPCS/WPCS · PHPStan L6 · 47 PHPUnit tests · PHP 8.0 syntax).
+>
+> What is left is **not code** — see [§12 Before submitting](#12-before-submitting-not-code).
+> The plan below is kept as the design record; where the build diverged from it,
+> §12 says so.
+
 **Repo:** `/home/shadow/Source/shadow-software-agt-sync-for-woocommerce`
 **Slug:** `agt-sync-for-woocommerce`
 **Text domain:** `agt-sync-for-woocommerce`
@@ -769,3 +777,81 @@ AGT listing, and restoring the product brings it back.
 `POST /api/v1/dealer/listings/{url_slug}/restore` — scope `listings:write`,
 wrapping the existing owner-gated restore logic.
 </content>
+
+---
+
+## 12. Before submitting (not code)
+
+Everything in phases 0–7 is built, tested and committed. Nothing below can be
+done by writing more code — each needs a decision, an asset, or an account.
+
+### Blocking, in order
+
+1. **Deploy the AGT side.** The dealer OAuth server and `/api/v1/dealer` are on
+   `master` locally and the migration has been run against dev + test. Production
+   needs `php artisan migrate` (creates the four `dealer_oauth_*` tables) and a
+   deploy. Until then the plugin has nothing to connect to.
+
+2. **Publish the AGT pages the plugin links to.** The plugin links out to these
+   from its How-to tab and its Plugins-screen row; a dead link is a bad look in
+   review:
+   - `/integrations/woocommerce` — the marketing page (§2.4)
+   - `/privacy` and `/terms` — verify these exist and are current, because
+     `readme.txt`'s **External services** section cites them by URL
+   - `/settings/connections` — the dealer-facing "disconnect this store" screen.
+     **Not built.** A dealer can currently only disconnect from the WordPress
+     side; they should be able to revoke from AGT too. This is a real gap, and
+     the one piece of §2.4 that is code.
+
+3. **Create the GitHub repo.** `shadow-software/agt-sync-for-woocommerce`. The
+   README, CI and deploy workflow all reference that path. Push, and confirm CI
+   goes green — especially the **Plugin Check** job, which is the exact gate
+   WordPress.org runs and which has never executed against a real checkout.
+
+4. **Screenshots + directory assets.** `.wordpress-org/` is empty. It needs
+   `icon-128x128.png`, `icon-256x256.png`, `banner-772x250.png`,
+   `banner-1544x500.png`, and `screenshot-1..4.png` matching the four captions
+   already written into `readme.txt`. Follow
+   `docs/seo/brand-image-generation.md` in the AGT repo for the brand art.
+
+5. **A sandbox dealer account for the reviewer.** This is the single
+   highest-leverage thing for approval. A reviewer cannot get past the Connect
+   button without a real FFL-approved, subscribed AGT account. The How-to tab
+   tells them to email support@shadowsoftware.com — **make sure that inbox is
+   watched and that someone can provision the account within a day**, or the
+   review stalls.
+
+6. **Submit.** `readme.txt` is written to the WP.org bar, including the
+   **External services** section (the #1 rejection reason for integration
+   plugins). Tag `1.0.0` to trigger the deploy workflow; it no-ops until
+   `SVN_USERNAME` / `SVN_PASSWORD` are set as repo secrets.
+
+### Worth doing, not blocking
+
+- **Backfill the orphaned images.** Fixing the hard-delete path (Phase 0) means
+  files are now actually removed — but every post hard-deleted before that fix
+  left its images on disk. There is likely a pile of them in
+  `storage/app/public`. A one-off reconciliation would need to be an MCP tool per
+  the project's own rule (`one-off-commands-as-mcp-tools.md`).
+- **Per-variation listings** (§11.3). The honest v2 feature: one variable product
+  becomes N listings, which re-keys `agt_sync_links` from `product_id` to
+  `variation_id` and makes the sold-writeback target the right variation.
+- **Webhooks** (§7). An opt-in accelerator for dealers whose store is publicly
+  reachable, reusing `CheckoutSignature`'s timestamped-HMAC pattern. Polling
+  stays the default because most dealer stores are not reachable at all.
+
+### Where the build diverged from this plan
+
+- **`mark_sold`** was planned as a "mark the listing sold" call. It is not: AGT
+  has no such endpoint on the dealer API, and it should not — a sale is something
+  a *buyer* completes on AGT, and a store claiming one that never happened there
+  would poison AGT's sold data. What a store can honestly say is "this is no
+  longer available", which is a removal (`Pusher::withdraw()`). Because removal is
+  a soft delete, restocking restores the listing rather than duplicating it.
+- **`POST /listings/{slug}/restore`** was added to the API (not in the original
+  endpoint list) once the deletion semantics were settled — it is what makes
+  untrash→restore work.
+- **`DealerApiAuth` forces `Accept: application/json`.** Discovered while testing:
+  `wp_remote_post` sends no Accept header, so a validation failure 302-redirected
+  instead of returning the 422 error bag, leaving the plugin unable to tell the
+  merchant *why* a product would not publish.
