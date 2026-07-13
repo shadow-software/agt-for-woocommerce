@@ -157,50 +157,38 @@ final class LinkMap {
 		// successful create, the next push sees no listing_id and publishes the same
 		// gun a SECOND time.
 		//
-		// The column names come from the $allowed allowlist above, never from the
-		// caller, so composing them into the statement is safe. Every VALUE is bound.
+		// INSERT first, and fall back to UPDATE only when the row already exists.
 		//
-		// NULLs are emitted as a literal NULL rather than bound: $wpdb->prepare()
-		// renders a null bound to %s as an EMPTY STRING, not as SQL NULL. Binding
-		// them would quietly turn `last_error => null` ("this product is fine") into
-		// `last_error = ''`, and `listing_id => null` ("this product has no listing")
-		// into `listing_id = ''` — which reads as a listing whose id is blank. The old
-		// $wpdb->insert()/update() got this right by deriving a format per value; a
-		// hand-built statement has to do it explicitly.
-		$columns = array_merge( array( 'product_id' => $product_id ), $row );
+		// NOT the other way round, and NOT a SELECT followed by a decision. Action
+		// Scheduler runs jobs concurrently, and two workers can easily touch the same
+		// product at once — a product save and a status poll, say. With a read and
+		// then a write, both see "no row", both INSERT, and the loser's write is
+		// silently swallowed by the PRIMARY KEY. If the write it lost was the one
+		// carrying the listing_id from a successful create, the next push sees no
+		// listing_id and publishes the same gun a SECOND time.
+		//
+		// Letting the INSERT race and catching the duplicate makes the primary key
+		// itself the arbiter, which is the only thing here that is actually atomic.
+		// Both branches use $wpdb->insert()/update(), which derive a format per value
+		// and so write a null as SQL NULL — a hand-built statement binding null to %s
+		// would write an EMPTY STRING instead, quietly turning "last_error => null"
+		// ("this product is fine") into "last_error = ''".
+		$insert = array_merge( array( 'product_id' => $product_id ), $row );
 
-		$fields       = array();
-		$placeholders = array();
-		$values       = array();
-
-		foreach ( $columns as $column => $value ) {
-			$fields[] = '`' . $column . '`';
-
-			if ( null === $value ) {
-				$placeholders[] = 'NULL';
-
-				continue;
-			}
-
-			$placeholders[] = '%s';
-			$values[]       = $value;
-		}
-
-		$updates = array();
-
-		foreach ( array_keys( $row ) as $column ) {
-			$updates[] = '`' . $column . '` = VALUES(`' . $column . '`)';
-		}
-
-		$sql = 'INSERT INTO %i (' . implode( ', ', $fields ) . ')'
-			. ' VALUES (' . implode( ', ', $placeholders ) . ')'
-			. ' ON DUPLICATE KEY UPDATE ' . implode( ', ', $updates );
+		$suppress = $wpdb->suppress_errors( true );
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin-owned table; there is no core API for it.
-		$wpdb->query(
-			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Composed only from the hardcoded $allowed column allowlist; the table is an %i identifier and every non-null value is bound.
-			$wpdb->prepare( $sql, array_merge( array( $table ), $values ) )
-		);
+		$inserted = $wpdb->insert( $table, $insert );
+
+		$wpdb->suppress_errors( $suppress );
+
+		if ( false !== $inserted ) {
+			return;
+		}
+
+		// The row was already there (or another worker won the race). Merge into it.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin-owned table; there is no core API for it.
+		$wpdb->update( $table, $row, array( 'product_id' => $product_id ) );
 	}
 
 	/**
