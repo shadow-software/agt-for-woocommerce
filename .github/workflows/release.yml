@@ -1,0 +1,151 @@
+name: Release
+
+# On a version tag, build the lean installable ZIP and publish a GitHub Release
+# with notes — in parallel to the WordPress.org deploy (deploy.yml), and
+# independent of it. This is the download a self-hosted store installs directly
+# via Plugins → Add New → Upload, without waiting on the wp.org directory or
+# needing SVN credentials.
+#
+# Trigger: push a version tag, e.g.
+#   git tag 1.0.0 && git push origin 1.0.0
+# The tag MUST equal readme.txt's "Stable tag", the plugin header "Version:", and
+# the AGT_SYNC_VERSION constant — the build fails loudly if they disagree, so a
+# mismatched release can never ship.
+on:
+  push:
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'
+      - '[0-9]+.[0-9]+.[0-9]+-*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing tag to (re)build a release for'
+        required: true
+
+permissions:
+  contents: write   # required to create the release and upload the asset
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Build ZIP and publish GitHub Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+
+      - name: Resolve the version
+        id: version
+        run: |
+          # The tag drives everything. On a tag push it's github.ref_name; on a
+          # manual run it's the supplied input.
+          version="${{ github.event.inputs.tag || github.ref_name }}"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "Building release for version: ${version}"
+
+      - name: Verify the tag matches the plugin version everywhere
+        run: |
+          set -euo pipefail
+          tag="${{ steps.version.outputs.version }}"
+
+          header="$(grep -oE '^\s*\*\s*Version:\s*\S+' agt-sync-for-woocommerce.php | awk '{print $NF}')"
+          const="$(grep -oE "AGT_SYNC_VERSION',\s*'[^']+'" agt-sync-for-woocommerce.php | grep -oE "'[0-9][^']*'" | tr -d "'")"
+          stable="$(grep -oE '^Stable tag:\s*\S+' readme.txt | awk '{print $NF}')"
+
+          echo "tag=${tag}  header=${header}  const=${const}  stable_tag=${stable}"
+
+          fail=0
+          [ "$header" = "$tag" ] || { echo "::error::Plugin header Version ($header) != tag ($tag)"; fail=1; }
+          [ "$const"  = "$tag" ] || { echo "::error::AGT_SYNC_VERSION ($const) != tag ($tag)"; fail=1; }
+          [ "$stable" = "$tag" ] || { echo "::error::readme.txt Stable tag ($stable) != tag ($tag)"; fail=1; }
+
+          if [ "$fail" -ne 0 ]; then
+            echo "::error::Version mismatch. Bump every place to ${tag} before tagging."
+            exit 1
+          fi
+
+      - name: Build the lean installable ZIP
+        id: build
+        run: |
+          set -euo pipefail
+          slug="agt-sync-for-woocommerce"
+          version="${{ steps.version.outputs.version }}"
+          zip="${slug}.${version}.zip"
+
+          # git archive applies .gitattributes export-ignore, so the ZIP contains
+          # ONLY the runtime plugin — no tests, docs, CI, composer, or wp.org
+          # assets — nested under the slug directory, exactly as WordPress expects
+          # from an uploaded ZIP. This is byte-for-byte the layout deploy.yml ships
+          # to wp.org, built the same way, so the two releases can never diverge.
+          mkdir -p dist
+          git archive --format=zip --prefix="${slug}/" -o "dist/${zip}" "${{ steps.version.outputs.version }}"
+
+          echo "zip=dist/${zip}" >> "$GITHUB_OUTPUT"
+          echo "Built dist/${zip}"
+
+      - name: Verify the ZIP is lean and installable
+        run: |
+          set -euo pipefail
+          zip="${{ steps.build.outputs.zip }}"
+
+          echo "── ZIP contents ──"
+          unzip -l "$zip"
+
+          # It must contain the main plugin file at the top of the slug dir…
+          unzip -l "$zip" | grep -q 'agt-sync-for-woocommerce/agt-sync-for-woocommerce.php' \
+            || { echo "::error::Main plugin file missing from the ZIP"; exit 1; }
+
+          # …and must NOT contain any development or repo cruft.
+          if unzip -l "$zip" | grep -Eq 'tests/|docs/|\.github|composer\.(json|lock)|phpcs|phpstan|phpunit|\.distignore|\.gitattributes|\.wordpress-org|README\.md|CONTRIBUTING\.md|SECURITY\.md'; then
+            echo "::error::Development or repo files leaked into the installable ZIP"
+            exit 1
+          fi
+
+          echo "ZIP is lean and installable."
+
+      - name: Extract release notes from the changelog
+        id: notes
+        run: |
+          set -euo pipefail
+          version="${{ steps.version.outputs.version }}"
+
+          body="$(bash .github/extract-changelog.sh "$version" readme.txt || true)"
+          if [ -z "$body" ]; then
+            body="See the changelog in readme.txt."
+          fi
+
+          {
+            echo "## AGT Sync for WooCommerce ${version}"
+            echo
+            echo "$body"
+            echo
+            echo "---"
+            echo
+            echo "**Install:** download \`agt-sync-for-woocommerce.${version}.zip\` below, then in your WordPress admin go to **Plugins → Add New → Upload Plugin**, choose the ZIP, and click **Install Now**. Requires WooCommerce and an American Gun Trader dealer account."
+            echo
+            echo "**Also on WordPress.org:** https://wordpress.org/plugins/agt-sync-for-woocommerce/"
+            echo
+            echo "**Documentation & source:** https://github.com/shadow-software/agt-sync-for-woocommerce#readme"
+            echo
+            echo "Developed & maintained by [Shadow Software LLC](https://shadowsoftware.com/)."
+          } > release-notes.md
+
+          echo "Wrote release notes:"
+          cat release-notes.md
+
+      - name: Publish the GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.version }}
+          name: ${{ steps.version.outputs.version }}
+          body_path: release-notes.md
+          files: ${{ steps.build.outputs.zip }}
+          draft: false
+          prerelease: ${{ contains(steps.version.outputs.version, '-') }}
+          fail_on_unmatched_files: true

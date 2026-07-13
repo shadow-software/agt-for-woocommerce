@@ -15,6 +15,11 @@ name: Deploy to WordPress.org
 #   SVN_USERNAME  — your WordPress.org account username
 #   SVN_PASSWORD  — your WordPress.org account password
 # Until those are set, this workflow simply no-ops on tag pushes.
+#
+# Runs in PARALLEL with release.yml (which builds the same lean ZIP from
+# `git archive` and attaches it to a GitHub Release). The two are independent: a
+# self-hosted store can install the GitHub Release ZIP without this deploy ever
+# running, and this deploy publishes to wp.org without needing the GitHub Release.
 on:
   push:
     tags:
