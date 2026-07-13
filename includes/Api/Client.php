@@ -28,10 +28,16 @@ final class Client {
 	private const TIMEOUT = 30;
 
 	/**
-	 * A lock so ten concurrent jobs do not all try to refresh the same rotating
-	 * refresh token — the first would win and invalidate the other nine.
+	 * The option name of the single-flight refresh lock.
 	 */
-	private const REFRESH_LOCK = 'agt_sync_refreshing';
+	private const REFRESH_LOCK = 'agt_sync_refresh_lock';
+
+	/**
+	 * How long the refresh lock is honoured before it is treated as stale and
+	 * stolen. Comfortably longer than a refresh round-trip (two 30s timeouts at
+	 * worst), short enough that a crashed holder does not wedge refreshes for long.
+	 */
+	private const REFRESH_LOCK_TTL = 90;
 
 	/**
 	 * GET.
@@ -306,7 +312,7 @@ final class Client {
 		// the local_rate_limit path in Queue::reschedule(), which re-queues at the SAME
 		// attempt number — it costs the job nothing, and it blocks no PHP worker on a
 		// sleep.
-		if ( get_transient( self::REFRESH_LOCK ) ) {
+		if ( ! $this->acquire_refresh_lock() ) {
 			$exception = ApiException::make(
 				esc_html__( 'A token refresh is already in progress; this job will run again shortly.', 'agt-sync-for-woocommerce' ),
 				429,
@@ -317,8 +323,6 @@ final class Client {
 
 			throw $exception;
 		}
-
-		set_transient( self::REFRESH_LOCK, 1, 30 );
 
 		// Re-read AFTER taking the lock.
 		//
@@ -332,7 +336,7 @@ final class Client {
 		$refresh = trim( Credentials::refresh_token() );
 
 		if ( '' === $refresh ) {
-			delete_transient( self::REFRESH_LOCK );
+			$this->release_refresh_lock();
 
 			$exception = ApiException::make(
 				esc_html__( 'This store is not connected to American Gun Trader.', 'agt-sync-for-woocommerce' ),
@@ -393,8 +397,56 @@ final class Client {
 				isset( $decoded['scope'] ) ? (string) $decoded['scope'] : ''
 			);
 		} finally {
-			delete_transient( self::REFRESH_LOCK );
+			$this->release_refresh_lock();
 		}
+	}
+
+	/**
+	 * Take the single-flight refresh lock, or return false if someone else holds it.
+	 *
+	 * Backed by add_option(), NOT a transient. A transient lives in the object cache
+	 * when one is configured, and a flaky or evicting Redis/Memcached would let
+	 * get_transient() report "no lock" to every concurrent job at once — which is
+	 * exactly the stampede this guards against, and here that stampede ends in the
+	 * store being disconnected (every loser spends the rotating token and the
+	 * failure path drops the credentials). add_option() is an INSERT against the
+	 * unique option_name and is atomic at the database, cache or no cache: exactly
+	 * one caller can create the row.
+	 *
+	 * A stale lock — the holder fatally died mid-refresh — is broken after a
+	 * timeout, so a crash cannot wedge refreshes forever.
+	 *
+	 * @return bool True if this caller now holds the lock.
+	 */
+	private function acquire_refresh_lock(): bool {
+		// add_option returns false if the row already exists. Autoload off; this is
+		// operational state, not config.
+		if ( add_option( self::REFRESH_LOCK, (string) time(), '', false ) ) {
+			return true;
+		}
+
+		// The lock exists. Is it stale — a holder that died without releasing?
+		$held_at = (int) get_option( self::REFRESH_LOCK, 0 );
+
+		if ( $held_at > 0 && ( time() - $held_at ) < self::REFRESH_LOCK_TTL ) {
+			return false; // Someone is genuinely refreshing right now.
+		}
+
+		// Stale. Steal it by stamping it afresh; if two callers race to steal, the
+		// update is last-writer-wins on a single row, so at most a brief overlap —
+		// far better than a lock wedged open by a dead process forever.
+		update_option( self::REFRESH_LOCK, (string) time(), false );
+
+		return true;
+	}
+
+	/**
+	 * Release the refresh lock.
+	 *
+	 * @return void
+	 */
+	private function release_refresh_lock(): void {
+		delete_option( self::REFRESH_LOCK );
 	}
 
 	/**

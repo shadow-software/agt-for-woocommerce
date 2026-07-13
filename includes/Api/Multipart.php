@@ -48,6 +48,18 @@ final class Multipart {
 			$body .= self::scalar( $value ) . $eol;
 		}
 
+		// A field name that appears on more than one file must be sent as `name[]`, or
+		// PHP parses only the last one and the server sees a single file where it
+		// expects an array. The dealer API validates `images` as an array, so its ten
+		// photos have to arrive as `images[]` — this is exactly the wire detail a
+		// mocked unit test misses and a real upload does not.
+		$name_counts = array();
+
+		foreach ( $files as $file ) {
+			$raw_name                 = (string) ( $file['name'] ?? 'file' );
+			$name_counts[ $raw_name ] = ( $name_counts[ $raw_name ] ?? 0 ) + 1;
+		}
+
 		foreach ( $files as $file ) {
 			$contents = self::read( (string) ( $file['path'] ?? '' ) );
 
@@ -55,7 +67,15 @@ final class Multipart {
 				continue;
 			}
 
-			$name     = self::sanitize( (string) ( $file['name'] ?? 'file' ) );
+			$raw_name = (string) ( $file['name'] ?? 'file' );
+			$name     = self::sanitize( $raw_name );
+
+			// Suffix [] when this name carries more than one file and does not already
+			// have it — matching how PHP expects a repeated field.
+			if ( ( $name_counts[ $raw_name ] ?? 0 ) > 1 && ! str_ends_with( $name, '[]' ) ) {
+				$name .= '[]';
+			}
+
 			$filename = self::sanitize( (string) ( $file['filename'] ?? 'upload.jpg' ) );
 			$type     = self::sanitize( (string) ( $file['type'] ?? 'application/octet-stream' ) );
 

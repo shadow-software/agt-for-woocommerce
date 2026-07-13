@@ -42,7 +42,8 @@ function agt_sync_uninstall_cleanup() {
 	// Caches.
 	delete_transient( 'agt_sync_taxonomy' );
 	delete_transient( 'agt_sync_pkce' );
-	delete_transient( 'agt_sync_refreshing' );
+	delete_option( 'agt_sync_refresh_lock' );
+	delete_option( 'agt_sync_bulk_sold_held' );
 
 	// The link table, and the per-product meta, only if the merchant asked.
 	if ( $purge ) {

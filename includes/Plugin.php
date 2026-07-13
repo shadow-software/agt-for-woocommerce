@@ -192,11 +192,25 @@ final class Plugin {
 		}
 
 		if ( 'instock' === $status ) {
-			// Restocked. If we withdrew its listing, bring it back.
-			$link = LinkMap::get( $product_id );
+			$link  = LinkMap::get( $product_id );
+			$state = is_array( $link ) ? (string) ( $link['state'] ?? '' ) : '';
 
-			if ( is_array( $link ) && LinkMap::STATE_DELETED === (string) ( $link['state'] ?? '' ) ) {
+			// Restocked after we withdrew its listing (it had gone out of stock here).
+			// Bring the same listing back.
+			if ( LinkMap::STATE_DELETED === $state ) {
 				Queue::restore( $product_id );
+
+				return;
+			}
+
+			// Restocked after it SOLD on American Gun Trader. That old listing is
+			// genuinely done — a buyer bought it there — so it must not be reused. But
+			// the merchant clearly has another unit, so publish a FRESH listing rather
+			// than leaving the product permanently stuck as "sold" with no way back.
+			// Forgetting the link makes the next push a clean create.
+			if ( LinkMap::STATE_SOLD === $state ) {
+				LinkMap::forget( $product_id );
+				Queue::push( $product_id );
 			}
 		}
 	}

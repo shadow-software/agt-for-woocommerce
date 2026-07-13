@@ -20,17 +20,26 @@ use PHPUnit\Framework\TestCase;
 final class MultipartTest extends TestCase {
 
 	/**
-	 * Set up Brain Monkey.
+	 * Set up Brain Monkey and a WP_Filesystem double that reads real files.
 	 */
 	protected function setUp(): void {
 		parent::setUp();
 		Monkey\setUp();
+
+		// Multipart::read() goes through $wp_filesystem. Give it one that just reads
+		// the file, so tests can hand it real temp files without booting WordPress.
+		$GLOBALS['wp_filesystem'] = new class() {
+			public function get_contents( string $path ): string|false {
+				return file_get_contents( $path );
+			}
+		};
 	}
 
 	/**
 	 * Tear down Brain Monkey.
 	 */
 	protected function tearDown(): void {
+		unset( $GLOBALS['wp_filesystem'] );
 		Monkey\tearDown();
 		parent::tearDown();
 	}
@@ -70,6 +79,58 @@ final class MultipartTest extends TestCase {
 		$this->assertStringContainsString( 'name="applications[]"', $body );
 		$this->assertStringContainsString( '3', $body );
 		$this->assertStringContainsString( '7', $body );
+	}
+
+	/**
+	 * A file field name that carries more than one file is suffixed with [], or PHP
+	 * parses only the last file and the server sees a scalar where it wants an
+	 * array. This is the exact wire detail a mocked test misses and a real upload
+	 * fails on ("The images must be an array."), so it is pinned here.
+	 */
+	public function test_repeated_file_field_names_get_the_array_suffix(): void {
+		$one = tempnam( sys_get_temp_dir(), 'agt' );
+		$two = tempnam( sys_get_temp_dir(), 'agt' );
+		file_put_contents( $one, 'first' );
+		file_put_contents( $two, 'second' );
+
+		$body = Multipart::build(
+			array(),
+			array(
+				array( 'name' => 'images', 'filename' => 'a.jpg', 'path' => $one, 'type' => 'image/jpeg' ),
+				array( 'name' => 'images', 'filename' => 'b.jpg', 'path' => $two, 'type' => 'image/jpeg' ),
+			),
+			'B'
+		);
+
+		unlink( $one );
+		unlink( $two );
+
+		// Both files present, and both under the array name.
+		$this->assertSame( 2, substr_count( $body, 'name="images[]"; filename=' ) );
+		$this->assertStringNotContainsString( 'name="images";', $body );
+	}
+
+	/**
+	 * A name already ending in [] is not double-suffixed. The Mapper sends
+	 * `images[]` directly (so even a single file is an array to the server), and
+	 * that must not become `images[][]`.
+	 */
+	public function test_a_name_already_ending_in_brackets_is_left_alone(): void {
+		$file = tempnam( sys_get_temp_dir(), 'agt' );
+		file_put_contents( $file, 'x' );
+
+		$body = Multipart::build(
+			array(),
+			array(
+				array( 'name' => 'images[]', 'filename' => 'a.jpg', 'path' => $file, 'type' => 'image/jpeg' ),
+			),
+			'B'
+		);
+
+		unlink( $file );
+
+		$this->assertStringContainsString( 'name="images[]"; filename=', $body );
+		$this->assertStringNotContainsString( 'images[][]', $body );
 	}
 
 	/**

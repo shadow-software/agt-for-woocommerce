@@ -68,10 +68,11 @@ final class LinkMap {
 			views INT UNSIGNED NOT NULL DEFAULT 0,
 			bid_count INT UNSIGNED NOT NULL DEFAULT 0,
 			last_pushed_at DATETIME NULL,
-			last_pulled_at DATETIME NULL,
+			last_pulled_at DATETIME NOT NULL DEFAULT '1970-01-01 00:00:00',
 			PRIMARY KEY (product_id),
 			KEY state (state),
-			KEY listing_id (listing_id)
+			KEY listing_id (listing_id),
+			KEY last_pulled_at (last_pulled_at)
 		) {$collate};";
 
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
@@ -224,7 +225,10 @@ final class LinkMap {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin-owned table.
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT product_id, listing_id FROM %i WHERE listing_id IS NOT NULL AND listing_id <> '' ORDER BY COALESCE(last_pulled_at, '1970-01-01') ASC LIMIT %d",
+				// ORDER BY last_pulled_at (now NOT NULL, indexed) so the hourly poll picks
+				// the least-recently-checked listings using the index and stops after
+				// LIMIT rows — no full scan + filesort of every tracked listing.
+				"SELECT product_id, listing_id FROM %i WHERE listing_id IS NOT NULL AND listing_id <> '' ORDER BY last_pulled_at ASC LIMIT %d",
 				$table,
 				$limit
 			),

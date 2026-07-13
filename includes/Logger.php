@@ -87,13 +87,32 @@ final class Logger {
 	 * @return string
 	 */
 	private static function redact( string $message ): string {
-		// Bearer tokens and our 40/64-char random credentials.
+		// A token in a log is a live credential — a merchant's WooCommerce logs are
+		// readable by any admin and get pasted into support threads. So redaction
+		// over-reaches on purpose: better to blank a harmless value than to leak a
+		// real one.
+
+		// 1. Anything after a Bearer scheme.
 		$message = (string) preg_replace( '/(Bearer\s+)[A-Za-z0-9\-\._~\+\/]+=*/i', '$1[redacted]', $message );
 
-		return (string) preg_replace(
-			'/("?(?:access_token|refresh_token|client_secret|code|code_verifier)"?\s*[:=]\s*"?)[A-Za-z0-9\-\._~\+\/]{8,}("?)/i',
+		// 2. A credential value after a known key, in any shape a log line takes:
+		// "key":"val"  key=val  key => val  (the last is a print_r / var_export
+		// dump of the tokens option). `token` is in the list because that is the
+		// field name the /revoke request body uses.
+		$keys = 'access_token|refresh_token|client_secret|code_verifier|code|token';
+
+		$message = (string) preg_replace(
+			'/(["\']?(?:' . $keys . ')["\']?\s*(?:=>|[:=])\s*["\']?)[A-Za-z0-9\-\._~\+\/\|]{8,}(["\']?)/i',
 			'$1[redacted]$2',
 			$message
 		);
+
+		// 3. A last-resort catch for a bare, label-less credential. The plugin's own
+		// tokens are 40- or 64-char base64url strings, and Laravel PATs look like
+		// "12|<40+ chars>". Redact those shapes even with no surrounding key, so a
+		// stray dump cannot slip a token through on a format we did not anticipate.
+		$message = (string) preg_replace( '/\b\d+\|[A-Za-z0-9]{40,}\b/', '[redacted]', $message );
+
+		return (string) preg_replace( '/\b[A-Za-z0-9\-_]{40,}\b/', '[redacted]', $message );
 	}
 }

@@ -291,26 +291,50 @@ final class Queue {
 		$offset = max( 0, (int) $offset );
 		$size   = max( 1, min( Settings::int( 'batch_size' ), 50 ) );
 
-		$ids = wc_get_products(
-			array(
-				'status'  => 'publish',
-				'type'    => 'simple',
-				'limit'   => $size,
-				'offset'  => $offset,
-				'return'  => 'ids',
-				'orderby' => 'ID',
-				'order'   => 'ASC',
-			)
-		);
+		$found = 0;
 
-		if ( ! is_array( $ids ) || empty( $ids ) ) {
+		try {
+			// OFFSET pagination, ordered by the primary key. A deep offset is not free
+			// — MySQL still walks the rows it skips — but ordering by ID keeps that a
+			// PK-index scan rather than a filesort, which is cheap enough for a
+			// background job. wc_get_products has no keyset ("ID > last") option, so
+			// this is the honest tool.
+			$ids = wc_get_products(
+				array(
+					'status'  => 'publish',
+					'type'    => 'simple',
+					'limit'   => $size,
+					'offset'  => $offset,
+					'return'  => 'ids',
+					'orderby' => 'ID',
+					'order'   => 'ASC',
+				)
+			);
+
+			if ( is_array( $ids ) ) {
+				$found = count( $ids );
+
+				foreach ( $ids as $id ) {
+					self::push( (int) $id );
+				}
+			}
+		} catch ( \Throwable $e ) {
+			// A fatal in ONE batch — a third-party woocommerce_product_query filter,
+			// an OOM on an odd product — must not strand the rest of the catalogue.
+			// run_backfill is NOT wrapped by Queue::run(), so without this the chain
+			// would die on the failed action and the remaining batches would simply
+			// never be scheduled: thousands of products silently unsynced while the
+			// settings screen still reads "syncing". Log it, and chain onward past the
+			// bad batch rather than stopping dead.
+			Logger::error( sprintf( 'Backfill batch at offset %d failed: %s', $offset, $e->getMessage() ) );
+
+			$found = $size; // Assume a full batch so the chain advances past it.
+		}
+
+		if ( 0 === $found ) {
 			Logger::info( 'Full catalogue sync finished.' );
 
 			return;
-		}
-
-		foreach ( $ids as $id ) {
-			self::push( (int) $id );
 		}
 
 		// Chain the next batch. Each job stays short, so a big catalogue cannot time

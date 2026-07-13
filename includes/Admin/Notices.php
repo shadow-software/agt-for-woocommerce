@@ -65,6 +65,21 @@ final class Notices {
 			return;
 		}
 
+		// A poll reported an implausible number of listings sold at once, so the
+		// out-of-stock changes were HELD rather than applied. This is the loudest
+		// notice on purpose: it means either a genuine sales surge the merchant
+		// should confirm, or a response that should not be trusted — and either way
+		// their catalogue's stock is at stake.
+		if ( '' !== (string) get_option( \AgtSync\Sync\Puller::BULK_SOLD_FLAG, '' ) ) {
+			$this->notice(
+				'error',
+				__( 'American Gun Trader reported an unusual number of your listings sold at once, so AGT Sync held the stock changes instead of taking those products out of stock. Please review your listings and confirm.', 'agt-sync-for-woocommerce' ),
+				__( 'Review', 'agt-sync-for-woocommerce' )
+			);
+
+			return;
+		}
+
 		// Connected, but the merchant never finished the setup.
 		if ( ! Settings::ready_to_sync() ) {
 			$this->notice(

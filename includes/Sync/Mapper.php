@@ -35,6 +35,13 @@ final class Mapper {
 	public const WEIGHT_MAX      = 1000.0;
 
 	/**
+	 * AGT's per-image ceiling, in kilobytes (10 MB). An image over this would be
+	 * rejected by the server anyway, so it is skipped before it is ever read into
+	 * memory.
+	 */
+	public const IMAGE_MAX_KB = 10240;
+
+	/**
 	 * Condition ids, as AGT defines them.
 	 */
 	public const CONDITION_NEW      = 1;
@@ -253,7 +260,10 @@ final class Mapper {
 	 * @return array<int,array<string,string>>
 	 */
 	public static function images( \WC_Product $product ): array {
-		$files = array();
+		$files     = array();
+		$total_kb  = 0;
+		$per_image = self::IMAGE_MAX_KB;                 // AGT's own per-image ceiling.
+		$budget_kb = self::upload_budget_kb();           // Total across the whole request.
 
 		foreach ( self::image_ids( $product ) as $id ) {
 			$path = get_attached_file( $id );
@@ -269,8 +279,30 @@ final class Mapper {
 				continue;
 			}
 
+			// Every image the Multipart builder is handed gets read WHOLE into memory,
+			// and the HTTP layer copies the body again. Without a ceiling, ten 12 MB
+			// phone photos become a ~120 MB string plus a copy — enough to OOM an
+			// Action Scheduler worker on a 128 MB shared host, which then retries and
+			// OOMs again. So skip anything the server would reject anyway (over the
+			// per-image limit), and stop once the whole request would exceed the
+			// budget — a listing with the first few photos beats a job that never
+			// completes.
+			$size_kb = (int) ceil( ( (int) filesize( $path ) ) / 1024 );
+
+			if ( $size_kb <= 0 || $size_kb > $per_image ) {
+				continue;
+			}
+
+			if ( $total_kb + $size_kb > $budget_kb && ! empty( $files ) ) {
+				break;
+			}
+
+			$total_kb += $size_kb;
+
 			$files[] = array(
-				'name'     => 'images',
+				// images[] — the server validates this as an array, so even a single
+				// file must arrive under the [] name or PHP hands it over as a scalar.
+				'name'     => 'images[]',
 				'filename' => basename( $path ),
 				'path'     => $path,
 				'type'     => $type,
@@ -278,6 +310,68 @@ final class Mapper {
 		}
 
 		return $files;
+	}
+
+	/**
+	 * The total image payload one push may build, in kilobytes.
+	 *
+	 * The whole image set is read into a single string and copied again by the HTTP
+	 * layer, so this is the real memory driver. It is derived from the process
+	 * memory_limit — a quarter of it, capped — rather than a flat number, so a
+	 * generous host can send more and a 128 MB host is protected. Filterable for a
+	 * merchant who knows their setup.
+	 *
+	 * @return int
+	 */
+	public static function upload_budget_kb(): int {
+		$limit_bytes = self::memory_limit_bytes();
+
+		// A quarter of the limit leaves headroom for the string, the HTTP layer's
+		// copy, and everything else the request is doing. Floored at 8 MB (a listing
+		// with at least one decent photo) and ceilinged near the sum of ten
+		// max-size images, beyond which there is nothing more to send anyway.
+		$budget_kb = (int) ( $limit_bytes > 0 ? ( $limit_bytes / 4 / 1024 ) : ( 24 * 1024 ) );
+
+		$budget_kb = max( 8 * 1024, min( $budget_kb, self::IMAGES_MAX * self::IMAGE_MAX_KB ) );
+
+		/**
+		 * Filters the total image-upload budget for one push, in kilobytes.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param int $budget_kb The computed budget.
+		 */
+		return (int) apply_filters( 'agt_sync_upload_budget_kb', $budget_kb );
+	}
+
+	/**
+	 * The PHP memory_limit in bytes, or 0 if it is unlimited/unreadable.
+	 *
+	 * @return int
+	 */
+	private static function memory_limit_bytes(): int {
+		$raw = trim( (string) ini_get( 'memory_limit' ) );
+
+		if ( '' === $raw || '-1' === $raw ) {
+			return 0;
+		}
+
+		$unit  = strtolower( substr( $raw, -1 ) );
+		$value = (int) $raw;
+
+		switch ( $unit ) {
+			case 'g':
+				$value *= 1024 * 1024 * 1024;
+				break;
+			case 'm':
+				$value *= 1024 * 1024;
+				break;
+			case 'k':
+				$value *= 1024;
+				break;
+		}
+
+		return max( 0, $value );
 	}
 
 	/**
