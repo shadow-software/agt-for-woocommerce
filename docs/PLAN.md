@@ -855,3 +855,70 @@ done by writing more code — each needs a decision, an asset, or an account.
   `wp_remote_post` sends no Accept header, so a validation failure 302-redirected
   instead of returning the 422 error bag, leaving the plugin unable to tell the
   merchant *why* a product would not publish.
+
+---
+
+## 13. Production incident: Cloudflare 403'd every `/oauth/*` path
+
+**Symptom.** The dealer API (`/api/v1/dealer/*`) worked in production, but every
+`/oauth/dealer/*` path returned a Cloudflare 403 challenge page. The requests never
+reached Laravel. No dealer could connect a store — the plugin's entire Connect flow
+was dark, while the half of the surface that a smoke test would hit looked fine.
+
+**Cause.** AGT pushes a route allowlist to Cloudflare as a **block rule**: anything
+not in the allowlist is 403'd at the edge. Two things had gone wrong at once:
+
+1. `CLOUDFLARE_WAF_ALLOWLIST_ENABLED=false` in prod, so
+   `cloudflare:sync-waf-allowlist` had been hitting its early return and exiting
+   `SUCCESS` on every deploy. `deploy.production.sh:466` ran it and "passed".
+2. A block rule named **`Laravel route allowlist - multi-segment paths`** was
+   nevertheless still live on the zone — applied at some point in the past, then
+   frozen when the sync was disabled. It was stuck at 2,852 chars while the current
+   route list generates 3,594.
+
+Its `retire_rule_descriptions` list did not match this rule's actual name, so it was
+never retired either.
+
+`/oauth/dealer/*` is the **first thing AGT has ever served under `/oauth/`** — the
+MCP OAuth server lives at `/mcp/oauth/*`, under the long-allowlisted `/mcp/` prefix.
+So it was the first route to fall outside a frozen allowlist, and the first to be
+blocked. `/api/v1/dealer/*` was fine only because `/api/` had been allowlisted for
+years.
+
+**Fix.** Diffed the live rule against a freshly generated one: the *only* semantic
+difference was a missing `/oauth/` prefix — nothing added, nothing removed — so the
+rule was PATCHed to append one clause (+49 chars):
+
+```
+or starts_with(http.request.uri.path, "/oauth/")
+```
+
+Zone `8a2861d1…`, ruleset `ca6013eb…`, rule `1e7492b3…`. Verified live:
+`POST /oauth/dealer/register` went 403 → **422**, and the full flow (dynamic client
+registration, `invalid_grant` on a forged code, `invalid_client` on a bad secret)
+now works against production.
+
+### What this leaves open
+
+- **The WAF sync is still disabled and its token is still broken.** On the prod host,
+  `CloudflareWafRuleService` gets `HTTP 403: request is not authorized` from the
+  Rulesets API — the token in AGT's `.env` exists but lacks Zone → WAF → Edit (the
+  patch above had to be applied with the global key from
+  `api.shadowsoftware.com/.env.dev`). So the allowlist is a security control that
+  *everyone believes is being maintained on every deploy and is not.* It is frozen
+  again the moment anyone adds a route under a new top-level prefix.
+- **Fixing it properly** means: give AGT's Cloudflare token Zone-WAF-Edit on the AGT
+  zone, set `CLOUDFLARE_WAF_ALLOWLIST_ENABLED=true`, and add
+  `'Laravel route allowlist - multi-segment paths'` +
+  `'Laravel route allowlist - single-segment paths'` to `retire_rule_descriptions`
+  so the sync actually replaces them instead of orphaning them.
+- **Headroom is thin.** Multi-segment is 3,594 of a 3,800-char guard. The next new
+  top-level prefix may force the builder to recompress.
+
+### The lesson for anyone adding a route
+
+A new **top-level path prefix** on AGT is a production-blocking change until
+Cloudflare knows about it. It will pass every test, every local check, and every
+staging run, and then 403 at the edge. Check
+`starts_with(http.request.uri.path, "/<prefix>/")` is in the live rule before
+believing a new route is reachable.
