@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-  <b>Built &amp; maintained by <a href="https://shadowsoftware.com/">Shadow Software</a></b> —
+  <b>Developed &amp; maintained by <a href="https://shadowsoftware.com/">Shadow Software LLC</a></b> —
   a WordPress &amp; WooCommerce development studio.
 </p>
 
@@ -168,3 +168,10 @@ Found something? Please **do not** open a public issue — see [SECURITY.md](SEC
 ## License
 
 GPL-2.0-or-later. See [LICENSE](LICENSE).
+
+---
+
+<p align="center">
+  © Shadow Software LLC · <a href="https://shadowsoftware.com/">shadowsoftware.com</a><br>
+  A free, open-source integration for <a href="https://americanguntrader.com/">American Gun Trader</a>.
+</p>

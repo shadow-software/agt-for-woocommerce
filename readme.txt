@@ -1,7 +1,7 @@
 === AGT Sync for WooCommerce ===
 Contributors: shadowsoftware
 Donate link: https://shadowsoftware.com/
-Tags: woocommerce, firearms, inventory sync, marketplace, dealers
+Tags: woocommerce, firearms, ffl, inventory-sync, marketplace
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.0
@@ -22,8 +22,9 @@ Your products become AGT listings. When one sells on AGT, the matching
 WooCommerce product is set **out of stock** — so you never sell the same firearm
 twice, on two sites, to two people.
 
-This plugin is completely free and open source. It is built and maintained by
-[Shadow Software](https://shadowsoftware.com/).
+This plugin is free and open source. It is developed and maintained by
+[Shadow Software LLC](https://shadowsoftware.com/), and its full source code is
+public on [GitHub](https://github.com/shadow-software/agt-sync-for-woocommerce).
 
 = You need an American Gun Trader dealer account =
 
@@ -43,9 +44,10 @@ American Gun Trader password.
 * **Keeps them in step.** Change a price in WooCommerce and the listing updates.
   Approved dealers publish straight to the site with no review queue, so a price
   change goes live rather than pulling the listing down.
-* **Sets a product out of stock when it sells on AGT.** This is the whole point.
-  The plugin checks in periodically; when a listing shows as sold, the product is
-  marked out of stock and a note is added to it.
+* **Sets a product out of stock when it sells on AGT.** The plugin checks in
+  periodically; when a listing shows as sold, the product is marked out of stock
+  and a note explaining why is added to it. This is what prevents the same firearm
+  being sold on both sites.
 * **Trash a product, the listing goes.** Restore it from the trash and the listing
   comes back — deletion is reversible on both sides.
 * **Shows you what happened.** Every product tells you its listing status, its
@@ -69,12 +71,14 @@ listings. Nothing else leaves your store.
 
 = Documentation and source code =
 
-The plugin is developed in the open on GitHub, and the project README is its full
-documentation.
+The plugin is developed in the open. Its full documentation — the setup guide, the
+field mapping, how the sync behaves, and the privacy and security model — is the
+project README on GitHub, kept alongside the source it describes.
 
 * Documentation: https://github.com/shadow-software/agt-sync-for-woocommerce#readme
 * Source code and releases: https://github.com/shadow-software/agt-sync-for-woocommerce
 * Report a bug or request a feature: https://github.com/shadow-software/agt-sync-for-woocommerce/issues
+* Developer: [Shadow Software LLC](https://shadowsoftware.com/)
 
 == Installation ==
 
@@ -150,10 +154,10 @@ Yes. Sync everything, or turn it on per product.
 
 Hourly by default.
 
-= Is my store hammered by this? =
+= Will this slow my store down? =
 
-No. Work runs in the background through WooCommerce's own scheduler, in small
-batches, with a rate limit you can lower.
+No. All work runs in the background through WooCommerce's own scheduler
+(Action Scheduler), in small batches, with a request rate limit you can lower.
 
 = Where are the documentation and the source code? =
 
@@ -241,8 +245,8 @@ The only data that leaves your store is the product information described under
 * Initial release: connect a WooCommerce store to an American Gun Trader dealer
   account with OAuth (no keys to copy), publish simple products as listings with
   all of their fields and photos, keep them updated, mirror deletion and
-  restoration both ways, and — the headline — set a WooCommerce product out of
-  stock automatically when the firearm sells on American Gun Trader.
+  restoration both ways, and set a WooCommerce product out of stock automatically
+  when the firearm sells on American Gun Trader.
 
 == Upgrade Notice ==
 
