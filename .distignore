@@ -1,0 +1,47 @@
+# Files excluded from the WordPress.org SVN deploy (the installable plugin).
+# The 10up deploy action reads this list; it mirrors .gitattributes export-ignore
+# so the same dev/repo files stay out of both `git archive` ZIPs and SVN.
+#
+# Everything here is development-only or repo presentation — never part of the
+# plugin that runs on a user's site.
+
+# Version control / repo meta
+/.git
+/.github
+/.wordpress-org
+/.gitignore
+/.gitattributes
+/.distignore
+/.editorconfig
+/.wp-env.json
+/.wp-env.override.json
+
+# Documentation (readme.txt is the user-facing one and is NOT ignored)
+/README.md
+/CONTRIBUTING.md
+/SECURITY.md
+
+# Dependency manager / dev tooling
+/composer.json
+/composer.lock
+/vendor
+/node_modules
+/phpcs.xml.dist
+/phpstan.neon
+/phpunit.xml.dist
+
+# Tests + caches + build artifacts
+/tests
+/.phpunit.cache
+/.phpunit.result.cache
+/build
+/dist
+*.zip
+*.log
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+
+# Internal planning docs — repo-only, never ship.
+/docs

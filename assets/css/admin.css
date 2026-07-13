@@ -1,0 +1,96 @@
+/**
+ * AGT Sync — admin styles.
+ *
+ * Deliberately small and native. This is a WooCommerce settings screen, and it
+ * should look like one: core admin components, core spacing, no framework, no
+ * webfont, no colour scheme of its own.
+ */
+
+.agt-sync-card {
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+	padding: 16px 20px;
+	margin: 16px 0;
+	max-width: 900px;
+}
+
+.agt-sync-card h2 {
+	margin-top: 0;
+}
+
+.agt-sync-card .notice.inline {
+	margin: 12px 0;
+}
+
+.agt-sync-good {
+	color: #007017;
+	font-weight: 600;
+}
+
+.agt-sync-radio {
+	display: block;
+	margin-bottom: 6px;
+}
+
+.agt-sync-counts {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 24px;
+	margin: 0;
+}
+
+.agt-sync-counts li {
+	margin: 0;
+}
+
+.agt-sync-counts strong {
+	display: block;
+	font-size: 24px;
+	line-height: 1.2;
+}
+
+.agt-sync-list {
+	list-style: disc;
+	margin-left: 20px;
+}
+
+.agt-sync-list li {
+	margin-bottom: 6px;
+}
+
+.agt-sync-howto ol.agt-sync-list {
+	list-style: decimal;
+}
+
+.agt-sync-behaviour th {
+	width: 30%;
+	text-align: left;
+}
+
+/* The product meta box. */
+.agt-sync-status {
+	margin: 8px 0;
+}
+
+.agt-sync-status--live strong {
+	color: #007017;
+}
+
+.agt-sync-status--sold strong {
+	color: #b26200;
+}
+
+.agt-sync-status--error strong,
+.agt-sync-status--rejected strong {
+	color: #b32d2e;
+}
+
+.agt-sync-problems {
+	list-style: disc;
+	margin: 0 0 0 20px;
+}
+
+.agt-sync-problems li {
+	margin-bottom: 4px;
+}

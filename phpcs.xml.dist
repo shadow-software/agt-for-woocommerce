@@ -1,0 +1,131 @@
+<?xml version="1.0"?>
+<ruleset name="AGT Sync for WooCommerce">
+	<description>
+		Coding standards for AGT Sync for WooCommerce.
+		WordPress-Extra + WordPress-Docs, with PHP 8.0+ compatibility.
+	</description>
+
+	<!-- What to scan. -->
+	<file>.</file>
+
+	<!-- What to skip. -->
+	<exclude-pattern>*/vendor/*</exclude-pattern>
+	<exclude-pattern>*/node_modules/*</exclude-pattern>
+	<exclude-pattern>*/tests/*</exclude-pattern>
+
+	<!-- Show sniff codes; colour; use all cores. -->
+	<arg value="ps"/>
+	<arg name="colors"/>
+	<arg name="parallel" value="8"/>
+	<arg name="extensions" value="php"/>
+
+	<!-- The WordPress standard (Extra = Core + best practices; Docs = inline docs). -->
+	<rule ref="WordPress-Extra"/>
+	<rule ref="WordPress-Docs"/>
+
+	<!--
+		Text domain + prefix enforcement: every i18n string must use this text
+		domain, and every global symbol must carry one of our prefixes. This is
+		what keeps the plugin from polluting the global namespace.
+	-->
+	<config name="text_domain" value="agt-sync-for-woocommerce"/>
+	<rule ref="WordPress.WP.I18n">
+		<properties>
+			<property name="text_domain" type="array">
+				<element value="agt-sync-for-woocommerce"/>
+			</property>
+		</properties>
+	</rule>
+	<rule ref="WordPress.NamingConventions.PrefixAllGlobals">
+		<properties>
+			<property name="prefixes" type="array">
+				<element value="AgtSync"/>
+				<element value="AGT_SYNC"/>
+				<element value="agt_sync"/>
+			</property>
+		</properties>
+	</rule>
+
+	<!--
+		Capabilities WooCommerce adds. The sniff only knows core's, so without this
+		it flags every one of these as a typo.
+	-->
+	<rule ref="WordPress.WP.Capabilities">
+		<properties>
+			<property name="custom_capabilities" type="array">
+				<element value="manage_woocommerce"/>
+				<element value="edit_product"/>
+			</property>
+		</properties>
+	</rule>
+
+	<!-- Minimum supported versions (gates deprecations + back-compat). -->
+	<config name="minimum_wp_version" value="6.4"/>
+
+	<!--
+		PHP cross-version compatibility. testVersion is the SUPPORTED range, not
+		the dev host: the plugin header says "Requires PHP: 8.0", so we lint for
+		8.0 and up.
+	-->
+	<config name="testVersion" value="8.0-"/>
+	<rule ref="PHPCompatibilityWP"/>
+
+	<!--
+		The plugin ships its own tiny PSR-4-ish autoloader (no Composer in the
+		distributed plugin), so class files are PascalCase, not the WP
+		hyphenated-lowercase convention. Allow PascalCase class filenames inside
+		includes/.
+	-->
+	<rule ref="WordPress.Files.FileName">
+		<properties>
+			<property name="strict_class_file_names" value="false"/>
+		</properties>
+		<exclude-pattern>*/includes/*</exclude-pattern>
+	</rule>
+
+	<!--
+		The sync link table is a custom table this plugin owns, queried by product
+		id and sync state. Those are direct queries by design — there is no core
+		API for a plugin's own table — and they are prepared and cached where it
+		matters. The sniffs below assume a plugin should be using the options or
+		post-meta API instead, which would not survive a 5,000-product catalogue.
+	-->
+	<rule ref="WordPress.DB.DirectDatabaseQuery">
+		<exclude-pattern>*/includes/Sync/LinkMap.php</exclude-pattern>
+	</rule>
+	<rule ref="WordPress.DB.PreparedSQL.InterpolatedNotPrepared">
+		<exclude-pattern>*/includes/Sync/LinkMap.php</exclude-pattern>
+	</rule>
+	<rule ref="WordPress.DB.PreparedSQLPlaceholders">
+		<exclude-pattern>*/includes/Sync/LinkMap.php</exclude-pattern>
+	</rule>
+
+	<!--
+		The plugin owns one custom table, and creating it on activation and dropping
+		it on an explicit purge are the only schema changes it ever makes. dbDelta()
+		is the sanctioned way to do the first, and there is no core API for the
+		second.
+	-->
+	<rule ref="WordPress.DB.DirectDatabaseQuery.SchemaChange">
+		<exclude-pattern>*/includes/Sync/LinkMap.php</exclude-pattern>
+		<exclude-pattern>*/uninstall.php</exclude-pattern>
+	</rule>
+
+	<!--
+		EscapeOutput treats EVERY argument of a `throw` as output — including the
+		HTTP status int, the error-code string, and the array of validation errors
+		that ApiException carries. Those are not printed anywhere; they are read by
+		the sync engine to decide whether to retry. The human-readable messages ARE
+		escaped (esc_html/esc_html__), and the only place any of this reaches a page
+		is the product meta box and the admin notices, which escape at the point of
+		output as they should.
+
+		Escaping an int or an array to satisfy a sniff would be cargo cult, so the
+		rule is scoped off for the two classes that throw, and left fully in force
+		everywhere output actually happens.
+	-->
+	<rule ref="WordPress.Security.EscapeOutput">
+		<exclude-pattern>*/includes/Api/Client.php</exclude-pattern>
+		<exclude-pattern>*/includes/Auth/OAuthClient.php</exclude-pattern>
+	</rule>
+</ruleset>

@@ -1,0 +1,64 @@
+name: Deploy to WordPress.org
+
+# Publishes a tagged release to the WordPress.org plugin directory
+# (SVN: https://plugins.svn.wordpress.org/agt-sync-for-woocommerce):
+#   * the installable plugin -> SVN trunk + a matching SVN tag (respecting
+#     .distignore / .gitattributes export-ignore), and
+#   * the directory assets (icon, banner, screenshot-N.png) from .wordpress-org/
+#     -> SVN assets/ (the 10up action moves them there automatically).
+#
+# Trigger: push a version tag matching the plugin's Stable tag, e.g.
+#   git tag 1.0.0 && git push origin 1.0.0
+# The tag must equal readme.txt's "Stable tag" and the plugin "Version:" header.
+#
+# Requires two repository secrets (Settings → Secrets and variables → Actions):
+#   SVN_USERNAME  — your WordPress.org account username
+#   SVN_PASSWORD  — your WordPress.org account password
+# Until those are set, this workflow simply no-ops on tag pushes.
+on:
+  push:
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'
+      - '[0-9]+.[0-9]+.[0-9]+-*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Publish to WordPress.org
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Guard — require WordPress.org credentials
+        id: guard
+        run: |
+          if [ -z "${{ secrets.SVN_USERNAME }}" ] || [ -z "${{ secrets.SVN_PASSWORD }}" ]; then
+            echo "WordPress.org SVN credentials are not configured; skipping deploy."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Deploy plugin + assets to WordPress.org
+        id: deploy
+        if: steps.guard.outputs.ready == 'true'
+        uses: 10up/action-wordpress-plugin-deploy@stable
+        with:
+          generate-zip: true
+        env:
+          SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
+          SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
+          SLUG: agt-sync-for-woocommerce
+          ASSETS_DIR: .wordpress-org
+
+      # Keep a copy of the exact ZIP that was published to wp.org for auditing.
+      - name: Upload published ZIP artifact
+        if: steps.guard.outputs.ready == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: agt-sync-for-woocommerce-${{ github.ref_name }}
+          path: ${{ steps.deploy.outputs.zip-path }}

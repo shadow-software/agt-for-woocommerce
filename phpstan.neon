@@ -1,0 +1,23 @@
+includes:
+    - vendor/szepeviktor/phpstan-wordpress/extension.neon
+
+parameters:
+    level: 6
+
+    paths:
+        - agt-sync-for-woocommerce.php
+        - uninstall.php
+        - includes
+
+    # WooCommerce types (WC_Product, wc_get_product, the logger) are not in the
+    # core WP stubs phpstan-wordpress ships, so pull in the WooCommerce stub
+    # package explicitly.
+    scanFiles:
+        - vendor/php-stubs/woocommerce-stubs/woocommerce-stubs.php
+        - vendor/php-stubs/woocommerce-stubs/woocommerce-packages-stubs.php
+
+    # Constants the plugin defines at bootstrap (define()'d in the main file).
+    bootstrapFiles:
+        - tests/php/phpstan-bootstrap.php
+
+    treatPhpDocTypesAsCertain: false

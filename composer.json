@@ -1,0 +1,56 @@
+{
+    "name": "shadow-software/agt-sync-for-woocommerce",
+    "description": "Publish WooCommerce products as American Gun Trader listings and keep them in step — when a gun sells on AGT, the WooCommerce product goes out of stock. By Shadow Software.",
+    "type": "wordpress-plugin",
+    "license": "GPL-2.0-or-later",
+    "homepage": "https://shadowsoftware.com/",
+    "authors": [
+        {
+            "name": "Shadow Software LLC",
+            "homepage": "https://shadowsoftware.com/"
+        }
+    ],
+    "require": {
+        "php": ">=8.0"
+    },
+    "require-dev": {
+        "squizlabs/php_codesniffer": "^3.13",
+        "wp-coding-standards/wpcs": "^3.2",
+        "phpcompatibility/phpcompatibility-wp": "^2.1",
+        "dealerdirect/phpcodesniffer-composer-installer": "^1.1",
+        "szepeviktor/phpstan-wordpress": "^2.0",
+        "phpstan/phpstan": "^2.1",
+        "php-stubs/woocommerce-stubs": "^9.0",
+        "yoast/phpunit-polyfills": "^3.1",
+        "brain/monkey": "^2.6"
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "AgtSync\\Tests\\": "tests/php/"
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        },
+        "sort-packages": true
+    },
+    "scripts": {
+        "lint": "phpcs",
+        "lint:fix": "phpcbf",
+        "stan": "phpstan analyse --no-progress",
+        "test": "phpunit",
+        "ci": [
+            "@lint",
+            "@stan",
+            "@test"
+        ]
+    },
+    "scripts-descriptions": {
+        "lint": "WordPress Coding Standards + PHPCompatibility (PHP 8.0+).",
+        "lint:fix": "Auto-fix the lint violations phpcbf can fix.",
+        "stan": "PHPStan with WordPress + WooCommerce stubs.",
+        "test": "PHPUnit unit tests (WP-mocked via Brain Monkey).",
+        "ci": "The full plugin gate: lint, stan, test."
+    }
+}
