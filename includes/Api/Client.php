@@ -125,13 +125,15 @@ final class Client {
 	 */
 	private function request( string $method, string $path, array $args = array() ): array {
 		if ( ! RateLimit::consume() ) {
-			throw new ApiException(
+			$exception = ApiException::make(
 				esc_html__( 'Local rate limit reached; the sync will continue shortly.', 'agt-sync-for-woocommerce' ),
 				429,
 				'local_rate_limit',
 				array(),
 				RateLimit::seconds_until_refill()
 			);
+
+			throw $exception;
 		}
 
 		if ( Credentials::access_token_expired() && Credentials::is_connected() ) {
@@ -200,7 +202,9 @@ final class Client {
 		);
 
 		if ( is_wp_error( $response ) ) {
-			throw new ApiException( esc_html( $response->get_error_message() ), 0, 'transport_error' );
+			$exception = ApiException::transport( $response->get_error_message() );
+
+			throw $exception;
 		}
 
 		$raw_headers = wp_remote_retrieve_headers( $response );
@@ -261,7 +265,9 @@ final class Client {
 
 		$errors = isset( $decoded['errors'] ) && is_array( $decoded['errors'] ) ? $decoded['errors'] : array();
 
-		throw new ApiException( esc_html( $message ), $status, $error_code, $errors, $retry_after );
+		$exception = ApiException::make( esc_html( $message ), $status, $error_code, $errors, $retry_after );
+
+		throw $exception;
 	}
 
 	/**
@@ -276,31 +282,66 @@ final class Client {
 	 * @throws ApiException When the refresh fails.
 	 */
 	private function refresh_access_token(): void {
-		$refresh = Credentials::refresh_token();
-
-		if ( '' === $refresh ) {
-			throw new ApiException(
+		if ( '' === Credentials::refresh_token() ) {
+			$exception = ApiException::make(
 				esc_html__( 'This store is not connected to American Gun Trader.', 'agt-sync-for-woocommerce' ),
 				401,
 				'not_connected'
 			);
+
+			throw $exception;
 		}
 
-		// Someone else is already refreshing. Wait briefly for them, then reuse
-		// whatever they got rather than burning the rotating token ourselves.
+		// Someone else is already refreshing. Do NOT wait for them, and do NOT try it
+		// ourselves.
+		//
+		// Refresh tokens rotate: redeeming one burns it. If two jobs refresh at once,
+		// the loser presents a token the winner has already spent, American Gun Trader
+		// rejects it, and the failure path below drops the credentials — disconnecting
+		// the whole store. Sleeping and hoping does not fix that, it just narrows the
+		// window; the loser can still wake up holding a token that was rotated while it
+		// slept.
+		//
+		// So back out and let Action Scheduler bring the job round again. This reuses
+		// the local_rate_limit path in Queue::reschedule(), which re-queues at the SAME
+		// attempt number — it costs the job nothing, and it blocks no PHP worker on a
+		// sleep.
 		if ( get_transient( self::REFRESH_LOCK ) ) {
-			for ( $i = 0; $i < 10; $i++ ) {
-				usleep( 300000 ); // 0.3s.
+			$exception = ApiException::make(
+				esc_html__( 'A token refresh is already in progress; this job will run again shortly.', 'agt-sync-for-woocommerce' ),
+				429,
+				'local_rate_limit',
+				array(),
+				5
+			);
 
-				if ( ! get_transient( self::REFRESH_LOCK ) && ! Credentials::access_token_expired() ) {
-					return;
-				}
-			}
-
-			// The other refresh never finished. Fall through and try ourselves.
+			throw $exception;
 		}
 
 		set_transient( self::REFRESH_LOCK, 1, 30 );
+
+		// Re-read AFTER taking the lock.
+		//
+		// The value checked at the top of this method is already stale by the time we
+		// get here: a refresh that was in flight may have rotated it, or may have
+		// failed and dropped the credentials entirely (forget_tokens(), below). Using
+		// the earlier value would present a token that has already been spent, which
+		// American Gun Trader rejects — and the failure path then disconnects the
+		// store. So take the current one, and stand down if there is no longer one to
+		// use.
+		$refresh = trim( Credentials::refresh_token() );
+
+		if ( '' === $refresh ) {
+			delete_transient( self::REFRESH_LOCK );
+
+			$exception = ApiException::make(
+				esc_html__( 'This store is not connected to American Gun Trader.', 'agt-sync-for-woocommerce' ),
+				401,
+				'not_connected'
+			);
+
+			throw $exception;
+		}
 
 		try {
 			$response = wp_remote_post(
@@ -320,7 +361,9 @@ final class Client {
 			);
 
 			if ( is_wp_error( $response ) ) {
-				throw new ApiException( esc_html( $response->get_error_message() ), 0, 'transport_error' );
+				$exception = ApiException::transport( $response->get_error_message() );
+
+				throw $exception;
 			}
 
 			$status  = (int) wp_remote_retrieve_response_code( $response );
@@ -334,11 +377,13 @@ final class Client {
 
 				Logger::error( 'Could not refresh the American Gun Trader token; the store has been disconnected.' );
 
-				throw new ApiException(
+				$exception = ApiException::make(
 					esc_html__( 'Your American Gun Trader connection has expired. Please reconnect your store.', 'agt-sync-for-woocommerce' ),
 					401,
 					'refresh_failed'
 				);
+
+				throw $exception;
 			}
 
 			Credentials::save_tokens(

@@ -100,14 +100,37 @@ final class Pusher {
 
 		$link       = LinkMap::get( $product_id );
 		$listing_id = is_array( $link ) && ! empty( $link['listing_id'] ) ? (string) $link['listing_id'] : '';
+		$state      = is_array( $link ) ? (string) ( $link['state'] ?? '' ) : '';
+
+		// It sold on American Gun Trader. That is terminal: a buyer completed a
+		// purchase there, and nothing this store pushes afterwards can be right.
+		// Editing the product must not resurrect or rewrite the sold listing.
+		if ( LinkMap::STATE_SOLD === $state ) {
+			return;
+		}
 
 		// Nothing changed. Do not spend a request saying so.
+		//
+		// The state check is the load-bearing half. A hash match only means the
+		// PAYLOAD is unchanged — it says nothing about whether the listing is
+		// actually up. The delete paths (remove/withdraw) and the skip path
+		// deliberately leave the hashes intact, so without this a listing that was
+		// taken down would look "already in sync" against its own stale hash and
+		// would never be restored: un-tick a product, re-tick it, and it would stay
+		// dead on AGT forever with no way for the merchant to force it back short of
+		// perturbing the title.
+		$inactive = in_array(
+			$state,
+			array( LinkMap::STATE_ERROR, LinkMap::STATE_DELETED, LinkMap::STATE_SKIPPED ),
+			true
+		);
+
 		if (
 			'' !== $listing_id
 			&& is_array( $link )
+			&& ! $inactive
 			&& (string) ( $link['payload_hash'] ?? '' ) === $payload_hash
 			&& (string) ( $link['image_hash'] ?? '' ) === $image_hash
-			&& LinkMap::STATE_ERROR !== (string) ( $link['state'] ?? '' )
 		) {
 			return;
 		}
@@ -115,6 +138,18 @@ final class Pusher {
 		try {
 			if ( '' === $listing_id ) {
 				$this->create( $product, $product_id, $payload, $payload_hash, $image_hash );
+
+				return;
+			}
+
+			// The listing is down — the product was trashed, unticked, or went out of
+			// stock — and the merchant has now made it publishable again. Bring the
+			// listing BACK rather than PATCHing it: a soft-deleted listing rejects an
+			// update (409), and creating a fresh one would leave a duplicate of the
+			// same gun on the marketplace. Restoring reuses the listing the store
+			// already owns, with its views and its URL intact.
+			if ( LinkMap::STATE_DELETED === $state ) {
+				$this->restore( $product_id );
 
 				return;
 			}

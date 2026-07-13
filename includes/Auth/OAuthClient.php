@@ -52,18 +52,22 @@ final class OAuthClient {
 		);
 
 		if ( is_wp_error( $response ) ) {
-			throw new ApiException( esc_html( $response->get_error_message() ), 0, 'transport_error' );
+			$exception = ApiException::transport( $response->get_error_message() );
+
+			throw $exception;
 		}
 
 		$status  = (int) wp_remote_retrieve_response_code( $response );
 		$decoded = json_decode( (string) wp_remote_retrieve_body( $response ), true );
 
 		if ( 201 !== $status || ! is_array( $decoded ) || empty( $decoded['client_id'] ) ) {
-			throw new ApiException(
+			$exception = ApiException::make(
 				esc_html__( 'Could not register this store with American Gun Trader. Please try again.', 'agt-sync-for-woocommerce' ),
 				$status,
 				'registration_failed'
 			);
+
+			throw $exception;
 		}
 
 		Credentials::save_client(
@@ -112,11 +116,13 @@ final class OAuthClient {
 		if ( '' === $verifier ) {
 			// The state did not match the pending flow. This callback did not come
 			// from a connect this store started.
-			throw new ApiException(
+			$exception = ApiException::make(
 				esc_html__( 'That connection request has expired or did not come from this site. Please click Connect again.', 'agt-sync-for-woocommerce' ),
 				400,
 				'state_mismatch'
 			);
+
+			throw $exception;
 		}
 
 		$response = wp_remote_post(
@@ -139,7 +145,9 @@ final class OAuthClient {
 		);
 
 		if ( is_wp_error( $response ) ) {
-			throw new ApiException( esc_html( $response->get_error_message() ), 0, 'transport_error' );
+			$exception = ApiException::transport( $response->get_error_message() );
+
+			throw $exception;
 		}
 
 		$status  = (int) wp_remote_retrieve_response_code( $response );
@@ -150,7 +158,9 @@ final class OAuthClient {
 				? $decoded['error_description']
 				: __( 'American Gun Trader would not complete the connection. Please try again.', 'agt-sync-for-woocommerce' );
 
-			throw new ApiException( esc_html( $message ), $status, 'token_exchange_failed' );
+			$exception = ApiException::make( esc_html( $message ), $status, 'token_exchange_failed' );
+
+			throw $exception;
 		}
 
 		Credentials::save_tokens(

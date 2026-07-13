@@ -261,10 +261,28 @@ final class ProductMetaBox {
 		$product->update_meta_data( self::META_ENABLED, $enabled );
 		$product->save_meta_data();
 
+		if ( ! Settings::ready_to_sync() ) {
+			return;
+		}
+
 		// Turning it off should take the listing down, not merely stop updating it —
 		// otherwise the product sits on American Gun Trader forever, unmanaged.
-		if ( '0' === $enabled && '' !== LinkMap::listing_id( $post_id ) && Settings::ready_to_sync() ) {
-			Queue::remove( $post_id );
+		if ( '0' === $enabled ) {
+			if ( '' !== LinkMap::listing_id( $post_id ) ) {
+				Queue::remove( $post_id );
+			}
+
+			return;
+		}
+
+		// Turning it back on has to actively put the listing BACK. Saving the product
+		// also fires woocommerce_update_product -> Queue::push(), but that alone is
+		// not enough: if nothing else about the product changed, its payload hash
+		// still matches the one we stored before it was taken down, and the push
+		// would see "already in sync" against a listing that is not actually up.
+		// Queue the restore explicitly so re-ticking the box always means something.
+		if ( '' !== LinkMap::listing_id( $post_id ) ) {
+			Queue::restore( $post_id );
 		}
 	}
 }

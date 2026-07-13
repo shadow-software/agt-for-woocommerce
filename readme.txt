@@ -11,7 +11,7 @@ WC tested up to: 10.8
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Publish your WooCommerce products as American Gun Trader listings, and when a gun sells there, the WooCommerce product goes out of stock automatically.
+Publish WooCommerce products as American Gun Trader listings. When a gun sells there, the WooCommerce product goes out of stock automatically.
 
 == Description ==
 

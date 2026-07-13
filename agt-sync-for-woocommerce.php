@@ -84,6 +84,17 @@ spl_autoload_register(
 	}
 );
 
+/*
+ * There is deliberately no load_plugin_textdomain() call here.
+ *
+ * WordPress has loaded a plugin's translations automatically since 4.6, and for a
+ * plugin hosted on WordPress.org the just-in-time loader handles the whole thing
+ * from the text domain alone. Calling it by hand is flagged as discouraged by the
+ * WordPress.org Plugin Check, and it is: it would only duplicate what core already
+ * does. The `Domain Path: /languages` header and the .pot in that directory are
+ * what translators and the directory need.
+ */
+
 /**
  * Declare compatibility with WooCommerce features. We only touch products, not
  * orders, but declaring HPOS + Blocks compatibility explicitly is what stops

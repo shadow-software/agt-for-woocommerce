@@ -112,20 +112,16 @@
 	</rule>
 
 	<!--
-		EscapeOutput treats EVERY argument of a `throw` as output — including the
-		HTTP status int, the error-code string, and the array of validation errors
-		that ApiException carries. Those are not printed anywhere; they are read by
-		the sync engine to decide whether to retry. The human-readable messages ARE
-		escaped (esc_html/esc_html__), and the only place any of this reaches a page
-		is the product meta box and the admin notices, which escape at the point of
-		output as they should.
+		NOTE: EscapeOutput is deliberately NOT excluded anywhere.
 
-		Escaping an int or an array to satisfy a sniff would be cargo cult, so the
-		rule is scoped off for the two classes that throw, and left fully in force
-		everywhere output actually happens.
+		It treats every argument of a `throw` as output — including an int status and
+		an array of field errors — which it cannot escape meaningfully. Rather than
+		suppress the sniff, ApiException is constructed through static factories
+		(ApiException::make() / ::transport()), so no variable is ever passed to a
+		`throw new`. The sniff is satisfied because the code is right, not because it
+		was told to look away.
+
+		This matters: the WordPress.org Plugin Check runs its own ruleset and ignores
+		this file entirely. Anything excluded here still fails there.
 	-->
-	<rule ref="WordPress.Security.EscapeOutput">
-		<exclude-pattern>*/includes/Api/Client.php</exclude-pattern>
-		<exclude-pattern>*/includes/Auth/OAuthClient.php</exclude-pattern>
-	</rule>
 </ruleset>

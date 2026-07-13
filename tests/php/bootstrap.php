@@ -26,6 +26,40 @@ define( 'MINUTE_IN_SECONDS', 60 );
 define( 'HOUR_IN_SECONDS', 3600 );
 define( 'DAY_IN_SECONDS', 86400 );
 
+/**
+ * A minimal WC_Product stand-in.
+ *
+ * WooCommerce is not loaded here — the suite mocks WordPress rather than booting
+ * it, which is what keeps it running in under a second. The plugin only ever
+ * calls a handful of getters on a product, so declaring them is enough to let the
+ * mapping logic be tested for real. Every method a test needs must be listed, or
+ * PHPUnit cannot mock it.
+ */
+if ( ! class_exists( 'WC_Product' ) ) {
+	// phpcs:disable
+	class WC_Product {
+		public function get_id() {}
+		public function get_name() {}
+		public function get_status() {}
+		public function get_description() {}
+		public function get_short_description() {}
+		public function get_regular_price() {}
+		public function get_price() {}
+		public function get_weight() {}
+		public function get_meta( $key = '' ) {}
+		public function get_attribute( $name = '' ) {}
+		public function get_category_ids() {}
+		public function get_image_id() {}
+		public function get_gallery_image_ids() {}
+		public function is_type( $type = '' ) {}
+		public function managing_stock() {}
+		public function set_stock_status( $status = '' ) {}
+		public function set_stock_quantity( $qty = 0 ) {}
+		public function save() {}
+	}
+	// phpcs:enable
+}
+
 // The plugin's own autoloader, so tests exercise the real one.
 spl_autoload_register(
 	static function ( string $classname ): void {

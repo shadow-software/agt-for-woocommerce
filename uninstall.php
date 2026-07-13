@@ -50,8 +50,8 @@ function agt_sync_uninstall_cleanup() {
 
 		$table = $wpdb->prefix . 'agt_sync_links';
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Plugin-owned table; DDL cannot be prepared.
-		$wpdb->query( "DROP TABLE IF EXISTS {$table}" );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange -- Dropping the plugin's own table, only when the merchant explicitly asked for it.
+		$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $table ) );
 
 		delete_post_meta_by_key( '_agt_sync_enabled' );
 		delete_post_meta_by_key( '_agt_sync_sold_at' );

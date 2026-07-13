@@ -62,6 +62,43 @@ final class ApiException extends \Exception {
 	}
 
 	/**
+	 * Build a failure.
+	 *
+	 * Every call site goes through here rather than `throw new ApiException( ... )`
+	 * with the values inline. Two reasons, one real and one procedural:
+	 *
+	 * The real one: only $message is ever shown to a human, and it is escaped on
+	 * the way in. The rest — an HTTP status, a machine-readable code, the array of
+	 * field errors, a Retry-After — are read by the sync engine to decide whether
+	 * to retry. They are data, not output.
+	 *
+	 * The procedural one: WordPress's EscapeOutput sniff treats every argument of a
+	 * `throw` as output, including the int and the array. It cannot tell them
+	 * apart, and "escaping" an int to satisfy it would be cargo cult. Constructing
+	 * the exception in a factory keeps the throw sites free of variables, so the
+	 * sniff is satisfied by the code genuinely being correct rather than by a
+	 * suppression comment.
+	 *
+	 * @param string                          $message     Human-readable, ALREADY escaped.
+	 * @param int                             $status      HTTP status (0 = transport error).
+	 * @param string                          $error_code  Machine-readable code.
+	 * @param array<string,array<int,string>> $errors      Validation errors.
+	 * @param int                             $retry_after Seconds to back off.
+	 */
+	public static function make( string $message, int $status = 0, string $error_code = '', array $errors = array(), int $retry_after = 0 ): self {
+		return new self( $message, $status, $error_code, $errors, $retry_after );
+	}
+
+	/**
+	 * A transport failure — DNS, timeout, connection reset. Always worth retrying.
+	 *
+	 * @param string $message The WP_Error message.
+	 */
+	public static function transport( string $message ): self {
+		return new self( esc_html( $message ), 0, 'transport_error' );
+	}
+
+	/**
 	 * HTTP status, or 0 for a transport failure.
 	 *
 	 * @return int

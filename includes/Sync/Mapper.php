@@ -352,12 +352,17 @@ final class Mapper {
 	public static function price( \WC_Product $product ): ?float {
 		$source = Settings::str( 'price_source' );
 
-		$raw = 'regular' === $source
-			? $product->get_regular_price()
-			: $product->get_price();
+		$regular = $product->get_regular_price();
+		$current = $product->get_price();
 
+		$raw = 'regular' === $source ? $regular : $current;
+
+		// Fall back to the OTHER one, not the same one again. A product priced only
+		// through a sale price has an empty regular price, and a listing with no price
+		// is no use to anybody — better to publish the price a buyer would actually
+		// pay than to refuse the product for having "no price".
 		if ( '' === $raw || null === $raw ) {
-			$raw = $product->get_regular_price();
+			$raw = 'regular' === $source ? $current : $regular;
 		}
 
 		if ( '' === $raw || null === $raw || ! is_numeric( $raw ) ) {

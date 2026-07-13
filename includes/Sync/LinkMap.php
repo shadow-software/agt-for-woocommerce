@@ -89,9 +89,9 @@ final class LinkMap {
 
 		$table = self::table();
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin-owned table; no core API for it.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin-owned table; there is no core API for it.
 		$row = $wpdb->get_row(
-			$wpdb->prepare( "SELECT * FROM {$table} WHERE product_id = %d", $product_id ), // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is not user input.
+			$wpdb->prepare( 'SELECT * FROM %i WHERE product_id = %d', $table, $product_id ),
 			ARRAY_A
 		);
 
@@ -147,19 +147,60 @@ final class LinkMap {
 			return;
 		}
 
-		$exists = null !== self::get( $product_id );
+		// ONE atomic upsert, not SELECT-then-INSERT-or-UPDATE.
+		//
+		// Action Scheduler runs jobs concurrently, and two workers can easily touch the
+		// same product at once (a save and a status poll, say). With a read followed by
+		// a write, both see "no row", both INSERT, and the second one violates the
+		// PRIMARY KEY on product_id. wpdb swallows that, so the loser's write is lost
+		// silently — and if the lost write was the one carrying the listing_id from a
+		// successful create, the next push sees no listing_id and publishes the same
+		// gun a SECOND time.
+		//
+		// The column names come from the $allowed allowlist above, never from the
+		// caller, so composing them into the statement is safe. Every VALUE is bound.
+		//
+		// NULLs are emitted as a literal NULL rather than bound: $wpdb->prepare()
+		// renders a null bound to %s as an EMPTY STRING, not as SQL NULL. Binding
+		// them would quietly turn `last_error => null` ("this product is fine") into
+		// `last_error = ''`, and `listing_id => null` ("this product has no listing")
+		// into `listing_id = ''` — which reads as a listing whose id is blank. The old
+		// $wpdb->insert()/update() got this right by deriving a format per value; a
+		// hand-built statement has to do it explicitly.
+		$columns = array_merge( array( 'product_id' => $product_id ), $row );
 
-		if ( $exists ) {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin-owned table.
-			$wpdb->update( $table, $row, array( 'product_id' => $product_id ) );
+		$fields       = array();
+		$placeholders = array();
+		$values       = array();
 
-			return;
+		foreach ( $columns as $column => $value ) {
+			$fields[] = '`' . $column . '`';
+
+			if ( null === $value ) {
+				$placeholders[] = 'NULL';
+
+				continue;
+			}
+
+			$placeholders[] = '%s';
+			$values[]       = $value;
 		}
 
-		$row['product_id'] = $product_id;
+		$updates = array();
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin-owned table.
-		$wpdb->insert( $table, $row );
+		foreach ( array_keys( $row ) as $column ) {
+			$updates[] = '`' . $column . '` = VALUES(`' . $column . '`)';
+		}
+
+		$sql = 'INSERT INTO %i (' . implode( ', ', $fields ) . ')'
+			. ' VALUES (' . implode( ', ', $placeholders ) . ')'
+			. ' ON DUPLICATE KEY UPDATE ' . implode( ', ', $updates );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin-owned table; there is no core API for it.
+		$wpdb->query(
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Composed only from the hardcoded $allowed column allowlist; the table is an %i identifier and every non-null value is bound.
+			$wpdb->prepare( $sql, array_merge( array( $table ), $values ) )
+		);
 	}
 
 	/**
@@ -195,7 +236,8 @@ final class LinkMap {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin-owned table.
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT product_id, listing_id FROM {$table} WHERE listing_id IS NOT NULL AND listing_id <> '' ORDER BY COALESCE(last_pulled_at, '1970-01-01') ASC LIMIT %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is not user input.
+				"SELECT product_id, listing_id FROM %i WHERE listing_id IS NOT NULL AND listing_id <> '' ORDER BY COALESCE(last_pulled_at, '1970-01-01') ASC LIMIT %d",
+				$table,
 				$limit
 			),
 			ARRAY_A
@@ -223,7 +265,10 @@ final class LinkMap {
 		$table = self::table();
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin-owned table.
-		$rows = $wpdb->get_results( "SELECT state, COUNT(*) AS total FROM {$table} GROUP BY state", ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is not user input.
+		$rows = $wpdb->get_results(
+			$wpdb->prepare( 'SELECT state, COUNT(*) AS total FROM %i GROUP BY state', $table ),
+			ARRAY_A
+		);
 
 		$counts = array();
 
@@ -251,7 +296,8 @@ final class LinkMap {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin-owned table.
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT product_id, last_error FROM {$table} WHERE state = %s LIMIT %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is not user input.
+				'SELECT product_id, last_error FROM %i WHERE state = %s LIMIT %d',
+				$table,
 				self::STATE_ERROR,
 				$limit
 			),
@@ -273,7 +319,7 @@ final class LinkMap {
 
 		$table = self::table();
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Plugin-owned table; DDL cannot be prepared.
-		$wpdb->query( "DROP TABLE IF EXISTS {$table}" );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange -- Dropping the plugin's own table on an explicit purge; there is no core API for it.
+		$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $table ) );
 	}
 }
