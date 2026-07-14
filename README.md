@@ -1,3 +1,7 @@
+<p align="center">
+  <img src=".github/assets/banner.png" alt="Sync Your Listings for WooCommerce — American Gun Trader — by Shadow Software" width="880">
+</p>
+
 <h1 align="center">AGT Sync for WooCommerce</h1>
 
 <p align="center">
@@ -7,11 +11,13 @@
 </p>
 
 <p align="center">
-  <img alt="WordPress" src="https://img.shields.io/badge/WordPress-6.4%2B-21759b">
-  <img alt="WooCommerce" src="https://img.shields.io/badge/WooCommerce-8.2%2B-96588a">
-  <img alt="PHP" src="https://img.shields.io/badge/PHP-8.0%2B-777bb4">
-  <img alt="License" src="https://img.shields.io/badge/License-GPL--2.0--or--later-blue">
-  <img alt="HPOS" src="https://img.shields.io/badge/HPOS-compatible-8fd468">
+  <a href="https://github.com/shadow-software/agt-for-woocommerce/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/shadow-software/agt-for-woocommerce?style=flat-square&color=d9a441"></a>
+  <img alt="WordPress" src="https://img.shields.io/badge/WordPress-6.4%2B-21759b?style=flat-square">
+  <img alt="WooCommerce" src="https://img.shields.io/badge/WooCommerce-8.2%2B-96588a?style=flat-square">
+  <img alt="PHP" src="https://img.shields.io/badge/PHP-8.0%2B-777bb4?style=flat-square">
+  <img alt="HPOS" src="https://img.shields.io/badge/HPOS-compatible-8fd468?style=flat-square">
+  <a href="LICENSE"><img alt="Licence" src="https://img.shields.io/badge/licence-GPL--2.0--or--later-d9a441?style=flat-square"></a>
+  <a href="https://shadowsoftware.com/"><img alt="Shadow Software" src="https://img.shields.io/badge/by-Shadow%20Software-8a8a8a?style=flat-square"></a>
 </p>
 
 <p align="center">
@@ -174,4 +180,30 @@ GPL-2.0-or-later. See [LICENSE](LICENSE).
 <p align="center">
   © Shadow Software LLC · <a href="https://shadowsoftware.com/">shadowsoftware.com</a><br>
   A free, open-source integration for <a href="https://americanguntrader.com/">American Gun Trader</a>.
+</p>
+
+---
+
+## Also by Shadow Software
+
+**WordPress & WooCommerce**
+
+| | |
+|---|---|
+| [**Broadside**](https://github.com/shadow-software/broadside-theme-for-wordpress) | A broadsheet block theme for WordPress — blackletter masthead, folio rule, three-column lead grid. |
+| [**Broadside Blocks**](https://github.com/shadow-software/broadside-blocks-for-wordpress) | The editorial furniture that ships with it — short answer, takeaways, contents, FAQ schema, sources. |
+| [**Crypto for WooCommerce**](https://github.com/shadow-software/crypto-for-woocommerce) | Free, self-custodial crypto payments — ETH, USDC, USDT & Bitcoin, confirmed on-chain. [On WordPress.org →](https://wordpress.org/plugins/shadow-software-crypto-for-woocommerce/) |
+| [**AGT for WooCommerce**](https://github.com/shadow-software/agt-for-woocommerce) | Sync your WooCommerce store with your American Gun Trader dealer listings. |
+
+**n8n**
+
+We run our automation on [n8n](https://n8n.io), and publish the nodes we had to build for it:
+
+| | |
+|---|---|
+| [**n8n-nodes-huggingface-space**](https://github.com/shadow-software/n8n-nodes-huggingface-space) | Run inference on any Hugging Face Gradio Space from n8n — images, video, music, speech, text and moderation, with a curated model catalog and automatic fallbacks. |
+| [**n8n-nodes-custom-exec-node**](https://github.com/shadow-software/n8n-nodes-custom-exec-node) | Brings back `bash` in n8n, which v2.0 removed. |
+
+<p align="center">
+  <sub><a href="https://shadowsoftware.com/">shadowsoftware.com</a> · GPL-2.0-or-later · © 2026 Shadow Software LLC</sub>
 </p>

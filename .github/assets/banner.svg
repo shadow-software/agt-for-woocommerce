@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1544" height="500" viewBox="0 0 1544 500" role="img" aria-label="Sync Your Listings for WooCommerce — American Gun Trader — by Shadow Software">
+  <defs>
+    <radialGradient id="bg" cx="16%" cy="0%" r="120%">
+      <stop offset="0%" stop-color="#3a2a0e"/>
+      <stop offset="45%" stop-color="#0b0b0b"/>
+      <stop offset="100%" stop-color="#060606"/>
+    </radialGradient>
+    <linearGradient id="face" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f2cf85"/>
+      <stop offset="52%" stop-color="#d9a441"/>
+      <stop offset="100%" stop-color="#9a6f22"/>
+    </linearGradient>
+    <filter id="soft" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="14"/>
+    </filter>
+  </defs>
+
+  <rect width="1544" height="500" fill="url(#bg)"/>
+
+  <g stroke="#d9a441" stroke-opacity="0.06" fill="none" stroke-width="3.5">
+    <path d="M230 90 290 125v70l-60 35-60-35v-70z"/>
+    <path d="M1330 320 1390 355v70l-60 35-60-35v-70z"/>
+    <path d="M1230 70 1272 94v48l-42 24-42-24V94z"/>
+  </g>
+
+  <g transform="translate(120 130) scale(5.6)">
+    <path d="M20 1.5 37 11.25v19.5L20 40.5 3 30.75v-19.5z" fill="#d9a441" opacity="0.22" filter="url(#soft)"/>
+    <path d="M20 1.5 37 11.25v19.5L20 40.5 3 30.75v-19.5z" fill="#0d0d0d" stroke="#d9a441" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M20 11c-4.4 0-7.8 3.3-7.8 8 0 2.6 1.1 4.7 2.6 6.2-1.7 1.1-2.9 2.7-3.3 4.8h17c-.4-2.1-1.6-3.7-3.3-4.8 1.5-1.5 2.6-3.6 2.6-6.2 0-4.7-3.4-8-7.8-8z" fill="#ededed"/>
+    <ellipse cx="20" cy="19.5" rx="3.6" ry="4.2" fill="#0d0d0d"/>
+  </g>
+
+  <g transform="translate(480 250)">
+    <ellipse cx="0" cy="118" rx="70" ry="14" fill="#000" opacity="0.35"/>
+    <circle r="92" fill="url(#face)" stroke="#9a6f22" stroke-width="4"/>
+    <circle r="78" fill="#0d0d0d" fill-opacity="0.82" stroke="#0d0d0d" stroke-opacity="0.2" stroke-width="2"/>
+    <g stroke="#d9a441" stroke-width="5" stroke-linecap="round">
+      <path d="M0 -72 V-26 M0 26 V72 M-72 0 H-26 M26 0 H72"/>
+      <path d="M0 -14 V14 M-14 0 H14" stroke-width="3" stroke-opacity="0.55"/>
+    </g>
+    <circle r="4.5" fill="#d9a441"/>
+    <g stroke="#d9a441" stroke-opacity="0.35" stroke-width="2" fill="none">
+      <circle r="46"/>
+    </g>
+  </g>
+
+  <g font-family="-apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+    <text x="640" y="228" font-size="80" font-weight="800" letter-spacing="-2" fill="#ffffff">Sync <tspan fill="#d9a441">Your Listings</tspan></text>
+    <text x="644" y="292" font-size="44" font-weight="600" letter-spacing="1" fill="#c9c9c9">for WooCommerce</text>
+    <text x="644" y="352" font-size="25" font-weight="500" letter-spacing="0.5" fill="#7f7f7f">American Gun Trader — inventory, pricing and availability, in step</text>
+    <rect x="644" y="378" width="360" height="5" rx="2.5" fill="#d9a441"/>
+    <text x="1024" y="382" font-size="20" font-weight="600" letter-spacing="0.5" fill="#9a6f22">by Shadow Software</text>
+  </g>
+</svg>
