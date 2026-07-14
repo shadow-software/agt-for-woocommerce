@@ -11,7 +11,7 @@ requests, or discussions.**
 
 Instead, report privately using either:
 
-- GitHub's [private vulnerability reporting](https://github.com/shadow-software/agt-sync-for-woocommerce/security/advisories/new)
+- GitHub's [private vulnerability reporting](https://github.com/shadow-software/agt-for-woocommerce/security/advisories/new)
   (**Security → Report a vulnerability**), or
 - email **security@shadowsoftware.com** with the details.
 

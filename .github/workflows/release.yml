@@ -131,7 +131,7 @@ jobs:
             echo
             echo "**Also on WordPress.org:** https://wordpress.org/plugins/agt-sync-for-woocommerce/"
             echo
-            echo "**Documentation & source:** https://github.com/shadow-software/agt-sync-for-woocommerce#readme"
+            echo "**Documentation & source:** https://github.com/shadow-software/agt-for-woocommerce#readme"
             echo
             echo "Developed & maintained by [Shadow Software LLC](https://shadowsoftware.com/)."
           } > release-notes.md

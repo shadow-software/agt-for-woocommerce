@@ -258,7 +258,7 @@ final class Plugin {
 
 		$links[] = '<a href="' . esc_url( admin_url( 'admin.php?page=agt-sync&tab=how-to' ) ) . '">'
 			. esc_html__( 'How it works', 'agt-sync-for-woocommerce' ) . '</a>';
-		$links[] = '<a href="' . esc_url( 'https://github.com/shadow-software/agt-sync-for-woocommerce#readme' ) . '" target="_blank" rel="noopener noreferrer">'
+		$links[] = '<a href="' . esc_url( 'https://github.com/shadow-software/agt-for-woocommerce#readme' ) . '" target="_blank" rel="noopener noreferrer">'
 			. esc_html__( 'Documentation', 'agt-sync-for-woocommerce' ) . '</a>';
 		$links[] = '<a href="' . esc_url( 'https://shadowsoftware.com/contact' ) . '" target="_blank" rel="noopener noreferrer">'
 			. esc_html__( 'Support', 'agt-sync-for-woocommerce' ) . '</a>';

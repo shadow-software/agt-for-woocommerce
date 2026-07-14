@@ -5,7 +5,7 @@ Tags: woocommerce, firearms, ffl, inventory-sync, marketplace
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 1.0.0
+Stable tag: 1.0.1
 WC requires at least: 8.2
 WC tested up to: 10.8
 License: GPLv2 or later
@@ -24,7 +24,7 @@ twice, on two sites, to two people.
 
 This plugin is free and open source. It is developed and maintained by
 [Shadow Software LLC](https://shadowsoftware.com/), and its full source code is
-public on [GitHub](https://github.com/shadow-software/agt-sync-for-woocommerce).
+public on [GitHub](https://github.com/shadow-software/agt-for-woocommerce).
 
 = You need an American Gun Trader dealer account =
 
@@ -75,9 +75,9 @@ The plugin is developed in the open. Its full documentation — the setup guide,
 field mapping, how the sync behaves, and the privacy and security model — is the
 project README on GitHub, kept alongside the source it describes.
 
-* Documentation: https://github.com/shadow-software/agt-sync-for-woocommerce#readme
-* Source code and releases: https://github.com/shadow-software/agt-sync-for-woocommerce
-* Report a bug or request a feature: https://github.com/shadow-software/agt-sync-for-woocommerce/issues
+* Documentation: https://github.com/shadow-software/agt-for-woocommerce#readme
+* Source code and releases: https://github.com/shadow-software/agt-for-woocommerce
+* Report a bug or request a feature: https://github.com/shadow-software/agt-for-woocommerce/issues
 * Developer: [Shadow Software LLC](https://shadowsoftware.com/)
 
 == Installation ==
@@ -162,10 +162,10 @@ No. All work runs in the background through WooCommerce's own scheduler
 = Where are the documentation and the source code? =
 
 Both are on GitHub:
-https://github.com/shadow-software/agt-sync-for-woocommerce#readme
+https://github.com/shadow-software/agt-for-woocommerce#readme
 
 Bug reports and feature requests are welcome at
-https://github.com/shadow-software/agt-sync-for-woocommerce/issues
+https://github.com/shadow-software/agt-for-woocommerce/issues
 
 == External services ==
 
@@ -240,6 +240,13 @@ The only data that leaves your store is the product information described under
    stock automatically.
 
 == Changelog ==
+
+= 1.0.1 =
+* Housekeeping. The source repository moved to
+  github.com/shadow-software/agt-for-woocommerce and every link now points there
+  directly rather than through a redirect.
+* The plugin itself is unchanged — no code, no behaviour, no settings. The plugin
+  slug remains `agt-sync-for-woocommerce`.
 
 = 1.0.0 =
 * Initial release: connect a WooCommerce store to an American Gun Trader dealer

@@ -114,8 +114,8 @@ final class HowToPage {
 
 		$links = array(
 			array( 'https://americanguntrader.com/integrations/woocommerce', __( 'AGT Sync on American Gun Trader', 'agt-sync-for-woocommerce' ) ),
-			array( 'https://github.com/shadow-software/agt-sync-for-woocommerce', __( 'Source code on GitHub', 'agt-sync-for-woocommerce' ) ),
-			array( 'https://github.com/shadow-software/agt-sync-for-woocommerce/issues', __( 'Report a bug or request a feature', 'agt-sync-for-woocommerce' ) ),
+			array( 'https://github.com/shadow-software/agt-for-woocommerce', __( 'Source code on GitHub', 'agt-sync-for-woocommerce' ) ),
+			array( 'https://github.com/shadow-software/agt-for-woocommerce/issues', __( 'Report a bug or request a feature', 'agt-sync-for-woocommerce' ) ),
 			array( 'https://shadowsoftware.com/', __( 'Shadow Software, the developers', 'agt-sync-for-woocommerce' ) ),
 			array( 'https://americanguntrader.com/privacy', __( 'American Gun Trader privacy policy', 'agt-sync-for-woocommerce' ) ),
 			array( 'https://americanguntrader.com/terms', __( 'American Gun Trader terms', 'agt-sync-for-woocommerce' ) ),
