@@ -12,11 +12,15 @@
 /README.md          export-ignore
 /composer.json      export-ignore
 /composer.lock      export-ignore
+/auth.json          export-ignore
 /phpcs.xml.dist     export-ignore
 /phpstan.neon       export-ignore
 /phpunit.xml.dist   export-ignore
 /.wp-env.json       export-ignore
 /.wp-env.override.json export-ignore
+
+# vendor/ is NOT export-ignored — runtime deps (agt-php-sdk) are installed into
+# the release ZIP by CI before packaging. Do not commit vendor/.
 
 # Normalise line endings.
 *.php   text eol=lf

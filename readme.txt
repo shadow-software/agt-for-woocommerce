@@ -4,7 +4,7 @@ Donate link: https://shadowsoftware.com/
 Tags: woocommerce, firearms, ffl, inventory-sync, marketplace
 Requires at least: 6.4
 Tested up to: 7.0
-Requires PHP: 8.0
+Requires PHP: 8.1
 Stable tag: 1.0.1
 WC requires at least: 8.2
 WC tested up to: 10.8
@@ -256,6 +256,9 @@ The only data that leaves your store is the product information described under
   when the firearm sells on American Gun Trader.
 
 == Upgrade Notice ==
+
+= 1.0.1 =
+Documentation and repository URL housekeeping only. No behaviour change.
 
 = 1.0.0 =
 Initial release.

@@ -3,15 +3,14 @@ name: CI
 # The full quality gate — coding standards, static analysis, unit tests, and the
 # official WordPress.org Plugin Check — runs on every push and pull request.
 #
-# Note on PHP versions: the plugin RUNTIME supports PHP 8.0+, and that is enforced
-# statically by PHPCompatibility (phpcs `testVersion: 8.0-`) and PHPStan, which
-# flag anything that would break on 8.0 without needing to execute there. The dev
-# tooling (PHPUnit 11) requires PHP 8.2+, so CI runs on 8.2 and 8.3.
+# Note on PHP versions: the plugin RUNTIME requires PHP 8.1+ (agt-php-sdk),
+# enforced by PHPCompatibility and PHPStan. Dev tooling (PHPUnit 11) needs 8.2+,
+# so CI runs on 8.2 and 8.3.
 on:
   push:
-    branches: [ production, main ]
+    branches: [ production, main, master ]
   pull_request:
-    branches: [ production, main ]
+    branches: [ production, main, master ]
   workflow_dispatch:
 
 permissions:
@@ -55,9 +54,18 @@ jobs:
           restore-keys: composer-${{ matrix.php }}-
 
       - name: Install dependencies
-        run: composer install --prefer-dist --no-progress --no-interaction
+        env:
+          COMPOSER_AUTH: ${{ secrets.COMPOSER_AUTH }}
+          GH_TOKEN: ${{ secrets.SDK_RELEASE_TOKEN }}
+        run: |
+          if [ -n "$GH_TOKEN" ]; then
+            composer config --global github-oauth.github.com "$GH_TOKEN"
+          elif [ -n "$COMPOSER_AUTH" ]; then
+            echo "$COMPOSER_AUTH" > "$HOME/.composer/auth.json"
+          fi
+          composer install --prefer-dist --no-progress --no-interaction
 
-      - name: Lint — WordPress Coding Standards + PHP 8.0 compatibility
+      - name: Lint — WordPress Coding Standards + PHP 8.1 compatibility
         run: composer lint
 
       - name: Static analysis — PHPStan (level 6)
@@ -66,31 +74,27 @@ jobs:
       - name: Unit tests — PHPUnit
         run: composer test
 
-  # A fast, dependency-free PHP 8.0 syntax gate so we always know the code at
-  # least parses on the minimum supported runtime, even though the test tooling
-  # cannot run there.
-  php80-syntax:
-    name: PHP 8.0 syntax
+  # PHP 8.1 syntax gate — minimum supported runtime.
+  php81-syntax:
+    name: PHP 8.1 syntax
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Set up PHP 8.0
+      - name: Set up PHP 8.1
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.0'
+          php-version: '8.1'
           coverage: none
       - name: php -l on every PHP file (excluding vendor)
         run: |
           find . -type f -name '*.php' -not -path './vendor/*' -print0 \
             | xargs -0 -n1 -P4 php -l > /dev/null
-          echo "All PHP files parse on PHP 8.0."
+          echo "All PHP files parse on PHP 8.1."
 
   # The official WordPress.org Plugin Check — the exact automated gate the
-  # directory runs. Built into the release layout first (via `git archive`, so
-  # dev/repo files are stripped and it is nested under the slug folder), then
-  # checked at the strictest settings: include experimental checks and both
-  # low-severity errors and warnings, so ANY finding at ANY level fails CI.
+  # directory runs. Built into the release layout first (composer --no-dev +
+  # distignore), then checked at the strictest settings.
   plugin-check:
     name: WordPress.org Plugin Check
     runs-on: ubuntu-latest
@@ -98,11 +102,32 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build the release layout (export-ignore applied, nested under slug)
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          tools: composer:v2
+
+      - name: Install runtime dependencies
+        env:
+          GH_TOKEN: ${{ secrets.SDK_RELEASE_TOKEN }}
         run: |
-          git archive --format=tar --prefix=agt-sync-for-woocommerce/ HEAD \
-            | tar -x -C "${{ runner.temp }}"
-          echo "PLUGIN_DIR=${{ runner.temp }}/agt-sync-for-woocommerce" >> "$GITHUB_ENV"
+          if [ -n "$GH_TOKEN" ]; then
+            composer config --global github-oauth.github.com "$GH_TOKEN"
+          fi
+          composer install --no-dev --prefer-dist --no-progress --no-interaction
+
+      - name: Build the release layout
+        run: |
+          set -euo pipefail
+          slug=agt-sync-for-woocommerce
+          dest="${{ runner.temp }}/${slug}"
+          mkdir -p "$dest"
+          # Copy runtime tree; honour .distignore by rsync exclude-from.
+          rsync -a --exclude-from=.distignore ./ "$dest/"
+          # Ensure vendor landed (runtime SDK).
+          test -f "$dest/vendor/autoload.php"
+          echo "PLUGIN_DIR=$dest" >> "$GITHUB_ENV"
 
       - name: Run Plugin Check
         uses: wordpress/plugin-check-action@v1

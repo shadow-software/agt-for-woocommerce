@@ -70,6 +70,21 @@ jobs:
             exit 1
           fi
 
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          tools: composer:v2
+
+      - name: Install runtime Composer dependencies
+        env:
+          GH_TOKEN: ${{ secrets.SDK_RELEASE_TOKEN }}
+        run: |
+          if [ -n "$GH_TOKEN" ]; then
+            composer config --global github-oauth.github.com "$GH_TOKEN"
+          fi
+          composer install --no-dev --prefer-dist --no-progress --no-interaction
+
       - name: Build the lean installable ZIP
         id: build
         run: |
@@ -77,14 +92,17 @@ jobs:
           slug="agt-sync-for-woocommerce"
           version="${{ steps.version.outputs.version }}"
           zip="${slug}.${version}.zip"
+          staging="${RUNNER_TEMP}/${slug}"
 
-          # git archive applies .gitattributes export-ignore, so the ZIP contains
-          # ONLY the runtime plugin — no tests, docs, CI, composer, or wp.org
-          # assets — nested under the slug directory, exactly as WordPress expects
-          # from an uploaded ZIP. This is byte-for-byte the layout deploy.yml ships
-          # to wp.org, built the same way, so the two releases can never diverge.
-          mkdir -p dist
-          git archive --format=zip --prefix="${slug}/" -o "dist/${zip}" "${{ steps.version.outputs.version }}"
+          mkdir -p "$staging" dist
+          rsync -a --exclude-from=.distignore ./ "$staging/"
+          test -f "$staging/vendor/autoload.php"
+          test -f "$staging/agt-sync-for-woocommerce.php"
+
+          (
+            cd "${RUNNER_TEMP}"
+            zip -r "${GITHUB_WORKSPACE}/dist/${zip}" "$slug"
+          )
 
           echo "zip=dist/${zip}" >> "$GITHUB_OUTPUT"
           echo "Built dist/${zip}"
@@ -94,15 +112,15 @@ jobs:
           set -euo pipefail
           zip="${{ steps.build.outputs.zip }}"
 
-          echo "── ZIP contents ──"
-          unzip -l "$zip"
+          echo "── ZIP contents (head) ──"
+          unzip -l "$zip" | head -60
 
-          # It must contain the main plugin file at the top of the slug dir…
           unzip -l "$zip" | grep -q 'agt-sync-for-woocommerce/agt-sync-for-woocommerce.php' \
             || { echo "::error::Main plugin file missing from the ZIP"; exit 1; }
+          unzip -l "$zip" | grep -q 'agt-sync-for-woocommerce/vendor/autoload.php' \
+            || { echo "::error::vendor/autoload.php missing — SDK not packaged"; exit 1; }
 
-          # …and must NOT contain any development or repo cruft.
-          if unzip -l "$zip" | grep -Eq 'tests/|docs/|\.github|composer\.(json|lock)|phpcs|phpstan|phpunit|\.distignore|\.gitattributes|\.wordpress-org|README\.md|CONTRIBUTING\.md|SECURITY\.md'; then
+          if unzip -l "$zip" | grep -Eq 'agt-sync-for-woocommerce/(tests/|docs/|\.github|composer\.(json|lock)|phpcs|phpstan|phpunit|\.distignore|\.gitattributes|\.wordpress-org|README\.md|CONTRIBUTING\.md|SECURITY\.md)'; then
             echo "::error::Development or repo files leaked into the installable ZIP"
             exit 1
           fi

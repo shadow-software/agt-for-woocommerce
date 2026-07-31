@@ -1,6 +1,6 @@
 {
     "name": "shadow-software/agt-sync-for-woocommerce",
-    "description": "Publish WooCommerce products as American Gun Trader listings and keep them in step — when a gun sells on AGT, the WooCommerce product goes out of stock. By Shadow Software.",
+    "description": "Publish WooCommerce products as American Gun Trader listings and keep them in step \u2014 when a gun sells on AGT, the WooCommerce product goes out of stock. By Shadow Software.",
     "type": "wordpress-plugin",
     "license": "GPL-2.0-or-later",
     "homepage": "https://shadowsoftware.com/",
@@ -11,7 +11,8 @@
         }
     ],
     "require": {
-        "php": ">=8.0"
+        "php": ">=8.1",
+        "shadow-software/agt-php-sdk": "^0.2"
     },
     "require-dev": {
         "squizlabs/php_codesniffer": "^3.13",
@@ -33,7 +34,8 @@
         "allow-plugins": {
             "dealerdirect/phpcodesniffer-composer-installer": true
         },
-        "sort-packages": true
+        "sort-packages": true,
+        "secure-http": true
     },
     "scripts": {
         "lint": "phpcs",
@@ -47,7 +49,7 @@
         ]
     },
     "scripts-descriptions": {
-        "lint": "WordPress Coding Standards + PHPCompatibility (PHP 8.0+).",
+        "lint": "WordPress Coding Standards + PHPCompatibility (PHP 8.1+).",
         "lint:fix": "Auto-fix the lint violations phpcbf can fix.",
         "stan": "PHPStan with WordPress + WooCommerce stubs.",
         "test": "PHPUnit unit tests (WP-mocked via Brain Monkey).",

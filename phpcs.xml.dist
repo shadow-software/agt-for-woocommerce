@@ -2,7 +2,7 @@
 <ruleset name="AGT Sync for WooCommerce">
 	<description>
 		Coding standards for AGT Sync for WooCommerce.
-		WordPress-Extra + WordPress-Docs, with PHP 8.0+ compatibility.
+		WordPress-Extra + WordPress-Docs, with PHP 8.1+ compatibility.
 	</description>
 
 	<!-- What to scan. -->
@@ -64,17 +64,15 @@
 
 	<!--
 		PHP cross-version compatibility. testVersion is the SUPPORTED range, not
-		the dev host: the plugin header says "Requires PHP: 8.0", so we lint for
-		8.0 and up.
+		the dev host: the plugin header says "Requires PHP: 8.1", so we lint for
+		8.1 and up.
 	-->
-	<config name="testVersion" value="8.0-"/>
+	<config name="testVersion" value="8.1-"/>
 	<rule ref="PHPCompatibilityWP"/>
 
 	<!--
-		The plugin ships its own tiny PSR-4-ish autoloader (no Composer in the
-		distributed plugin), so class files are PascalCase, not the WP
-		hyphenated-lowercase convention. Allow PascalCase class filenames inside
-		includes/.
+		Class files are PascalCase (PSR-4), not the WP hyphenated-lowercase
+		convention. Allow PascalCase class filenames inside includes/.
 	-->
 	<rule ref="WordPress.Files.FileName">
 		<properties>

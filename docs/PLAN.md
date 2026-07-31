@@ -8,7 +8,8 @@
 > The plan below is kept as the design record; where the build diverged from it,
 > §12 says so.
 
-**Repo:** `/home/shadow/Source/shadow-software-agt-sync-for-woocommerce`
+**Repo:** `/home/shadow/Source/wordpress/plugins/agt-for-woocommerce`
+(GitHub: `shadow-software/agt-for-woocommerce`; install slug unchanged)
 **Slug:** `agt-sync-for-woocommerce`
 **Text domain:** `agt-sync-for-woocommerce`
 **PHP namespace:** `AgtSync\`
@@ -16,8 +17,13 @@
 **License:** GPL-2.0-or-later
 **Author:** Shadow Software LLC — https://shadowsoftware.com/
 
-Reference implementation (passed WordPress.org review): `/home/shadow/Source/shadow-software-crypto-for-woocommerce`.
+Reference implementation (passed WordPress.org review):
+`/home/shadow/Source/wordpress/plugins/shadow-software-crypto-for-woocommerce`.
 Every convention below is copied from it deliberately.
+
+Submission progress (assets, accounts, remaining screenshots) lives in
+[SUBMISSION.md](SUBMISSION.md) — keep that file current; this plan stays the
+design record.
 
 ---
 
@@ -803,16 +809,14 @@ done by writing more code — each needs a decision, an asset, or an account.
      side; they should be able to revoke from AGT too. This is a real gap, and
      the one piece of §2.4 that is code.
 
-3. **Create the GitHub repo.** `shadow-software/agt-sync-for-woocommerce`. The
-   README, CI and deploy workflow all reference that path. Push, and confirm CI
-   goes green — especially the **Plugin Check** job, which is the exact gate
-   WordPress.org runs and which has never executed against a real checkout.
+3. **GitHub repo.** Canonical: `shadow-software/agt-for-woocommerce` (renamed
+   from `agt-sync-for-woocommerce`; install slug unchanged). Confirm CI goes
+   green — especially the **Plugin Check** job.
 
-4. **Screenshots + directory assets.** `.wordpress-org/` is empty. It needs
-   `icon-128x128.png`, `icon-256x256.png`, `banner-772x250.png`,
-   `banner-1544x500.png`, and `screenshot-1..4.png` matching the four captions
-   already written into `readme.txt`. Follow
-   `docs/seo/brand-image-generation.md` in the AGT repo for the brand art.
+4. **Screenshots + directory assets.** Icons and banners are in `.wordpress-org/`.
+   `screenshot-1.png` is present; screenshots 2–4 matching the captions in
+   `readme.txt` are still outstanding. Follow
+   `docs/seo/brand-image-generation.md` in the AGT product repo for brand art.
 
 5. **A sandbox dealer account for the reviewer.** This is the single
    highest-leverage thing for approval. A reviewer cannot get past the Connect

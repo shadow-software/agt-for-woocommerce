@@ -5,7 +5,7 @@
  * Description:       Publish your WooCommerce products as listings on American Gun Trader, and keep them in step. When a gun sells on AGT, the WooCommerce product is set out of stock automatically — so you never sell the same firearm twice. Free and open source; requires an American Gun Trader dealer account.
  * Version:           1.0.1
  * Requires at least: 6.4
- * Requires PHP:      8.0
+ * Requires PHP:      8.1
  * Requires Plugins:  woocommerce
  * Author:            Shadow Software LLC
  * Author URI:        https://shadowsoftware.com/
@@ -41,10 +41,17 @@ if ( ! defined( 'AGT_SYNC_API_BASE' ) ) {
 	define( 'AGT_SYNC_API_BASE', 'https://americanguntrader.com' );
 }
 
+/*
+ * Runtime Composer dependencies (shadow-software/agt-php-sdk and Guzzle) ship in
+ * vendor/ in the installable ZIP. Build runs `composer install --no-dev`.
+ */
+$agt_sync_autoload = AGT_SYNC_PATH . 'vendor/autoload.php';
+if ( is_readable( $agt_sync_autoload ) ) {
+	require_once $agt_sync_autoload;
+}
+
 /**
- * Minimal PSR-4-ish autoloader for the plugin's own classes. The plugin ships no
- * Composer dependencies in the distributed build so it stays drop-in and
- * wp.org-friendly.
+ * Minimal PSR-4-ish autoloader for the plugin's own classes.
  *
  * Hardened against path traversal: the namespace prefix is stripped, the
  * remaining class name is validated to contain only class-name characters, and

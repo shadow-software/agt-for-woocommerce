@@ -48,6 +48,23 @@ jobs:
             echo "ready=true" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Set up PHP
+        if: steps.guard.outputs.ready == 'true'
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          tools: composer:v2
+
+      - name: Install runtime Composer dependencies
+        if: steps.guard.outputs.ready == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.SDK_RELEASE_TOKEN }}
+        run: |
+          if [ -n "$GH_TOKEN" ]; then
+            composer config --global github-oauth.github.com "$GH_TOKEN"
+          fi
+          composer install --no-dev --prefer-dist --no-progress --no-interaction
+
       - name: Deploy plugin + assets to WordPress.org
         id: deploy
         if: steps.guard.outputs.ready == 'true'

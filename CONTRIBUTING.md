@@ -12,13 +12,22 @@ on an approach before the code exists than after.
 
 ## Getting set up
 
+The plugin requires **`shadow-software/agt-php-sdk`** at runtime (OpenAPI-
+generated dealer API client). Until that package is on Packagist, `composer.json`
+lists the GitHub VCS repository. Create a local `auth.json` (gitignored) with a
+GitHub token that can read `shadow-software/agt-php-sdk`:
+
+```json
+{ "github-oauth": { "github.com": "ghp_…" } }
+```
+
 ```bash
 composer install
 composer ci        # lint + static analysis + tests
 ```
 
-To develop against a local American Gun Trader, define the API base in
-`wp-config.php` before the plugin loads:
+Requires **PHP 8.1+**. To develop against a local American Gun Trader, define the
+API base in `wp-config.php` before the plugin loads:
 
 ```php
 define( 'AGT_SYNC_API_BASE', 'https://agt.test' );
@@ -30,21 +39,23 @@ Every change has to pass, and CI enforces all of it:
 
 | | |
 | --- | --- |
-| `composer lint` | WordPress Coding Standards (Extra + Docs) and PHP 8.0 compatibility |
+| `composer lint` | WordPress Coding Standards (Extra + Docs) and PHP 8.1 compatibility |
 | `composer stan` | PHPStan level 6, with WordPress + WooCommerce stubs |
 | `composer test` | PHPUnit, with WordPress mocked via Brain Monkey |
 | Plugin Check | The official WordPress.org check, at its strictest — experimental checks on, and both low-severity errors *and* warnings fail the build |
 
-The plugin ships **no runtime Composer dependencies**. Everything in
-`require-dev` is development tooling and is stripped from the release. If a change
-needs a library at runtime, that is a conversation to have in an issue first.
+The installable ZIP ships **runtime** Composer dependencies (`vendor/`, including
+`shadow-software/agt-php-sdk`). Dev tooling stays out of the release. Sync still
+runs through the hand-rolled `AgtSync\Api\Client` today; new API surface should
+go through `AgtSync\Api\SdkFactory` so the cut-over to the SDK is mechanical.
 
 ## House style
 
 - WordPress Coding Standards. `composer lint:fix` fixes most of it for you.
 - Escape at the point of output, sanitize at the point of input, and check a nonce
   *and* a capability on every action. No exceptions.
-- All HTTP through `wp_remote_*`. Never cURL directly.
+- Prefer the generated SDK (`SdkFactory`) for new dealer-API calls. The legacy
+  `wp_remote_*` client remains until the cut-over is complete — do not grow it.
 - Every user-facing string translatable, with the `agt-sync-for-woocommerce` text
   domain.
 - Never log a token. `Logger` redacts them, but do not rely on it.

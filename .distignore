@@ -21,10 +21,10 @@
 /CONTRIBUTING.md
 /SECURITY.md
 
-# Dependency manager / dev tooling
+# Dependency manager / tooling metadata (vendor/ IS shipped — runtime SDK)
 /composer.json
 /composer.lock
-/vendor
+/auth.json
 /node_modules
 /phpcs.xml.dist
 /phpstan.neon

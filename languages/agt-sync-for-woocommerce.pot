@@ -1,0 +1,748 @@
+# Copyright (C) 2026 Shadow Software LLC
+# This file is distributed under the GPL-2.0-or-later.
+msgid ""
+msgstr ""
+"Project-Id-Version: AGT Sync for WooCommerce 1.0.1\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/agt-for-woocommerce\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2026-07-30T18:19:29+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.12.0\n"
+"X-Domain: agt-sync-for-woocommerce\n"
+
+#. Plugin Name of the plugin
+#: agt-sync-for-woocommerce.php
+#: includes/Admin/SettingsPage.php:286
+msgid "AGT Sync for WooCommerce"
+msgstr ""
+
+#. Plugin URI of the plugin
+#: agt-sync-for-woocommerce.php
+msgid "https://github.com/shadow-software/agt-for-woocommerce"
+msgstr ""
+
+#. Description of the plugin
+#: agt-sync-for-woocommerce.php
+msgid "Publish your WooCommerce products as listings on American Gun Trader, and keep them in step. When a gun sells on AGT, the WooCommerce product is set out of stock automatically — so you never sell the same firearm twice. Free and open source; requires an American Gun Trader dealer account."
+msgstr ""
+
+#. Author of the plugin
+#: agt-sync-for-woocommerce.php
+msgid "Shadow Software LLC"
+msgstr ""
+
+#. Author URI of the plugin
+#: agt-sync-for-woocommerce.php
+msgid "https://shadowsoftware.com/"
+msgstr ""
+
+#: agt-sync-for-woocommerce.php:181
+msgid "AGT Sync for WooCommerce requires WooCommerce to be installed and active."
+msgstr ""
+
+#: includes/Admin/HowToPage.php:36
+msgid "What this plugin does"
+msgstr ""
+
+#: includes/Admin/HowToPage.php:37
+msgid "It publishes your WooCommerce products as listings on American Gun Trader, and keeps the two in step. The point of it is this: when a gun sells on American Gun Trader, the matching WooCommerce product is set out of stock automatically — so you cannot sell the same firearm twice, to two people, on two sites."
+msgstr ""
+
+#: includes/Admin/HowToPage.php:39
+msgid "What you need"
+msgstr ""
+
+#: includes/Admin/HowToPage.php:41
+msgid "A free American Gun Trader account."
+msgstr ""
+
+#: includes/Admin/HowToPage.php:42
+msgid "An approved FFL on that account."
+msgstr ""
+
+#: includes/Admin/HowToPage.php:43
+msgid "An active dealer subscription."
+msgstr ""
+
+#: includes/Admin/HowToPage.php:44
+msgid "A complete address on that account, with a city chosen from the dropdown — listings take their location from your account, not from the product."
+msgstr ""
+
+#: includes/Admin/HowToPage.php:47
+msgid "How to connect"
+msgstr ""
+
+#: includes/Admin/HowToPage.php:49
+msgid "Click \"Connect to American Gun Trader\" on the Settings tab."
+msgstr ""
+
+#: includes/Admin/HowToPage.php:50
+msgid "You are taken to americanguntrader.com and asked to log in."
+msgstr ""
+
+#: includes/Admin/HowToPage.php:51
+msgid "American Gun Trader shows you which store is asking, and what it will be able to do. You approve it."
+msgstr ""
+
+#: includes/Admin/HowToPage.php:52
+msgid "You land back here, connected. There is nothing to copy and paste, and your store never sees your American Gun Trader password."
+msgstr ""
+
+#: includes/Admin/HowToPage.php:55
+msgid "How to set it up"
+msgstr ""
+
+#: includes/Admin/HowToPage.php:57
+msgid "Choose a default condition. Nothing publishes until you do — listing a used firearm as new is not something this plugin will guess at."
+msgstr ""
+
+#: includes/Admin/HowToPage.php:58
+msgid "Map your WooCommerce categories to American Gun Trader categories. A product will not publish until its category is mapped. Mapping a parent category covers everything beneath it."
+msgstr ""
+
+#: includes/Admin/HowToPage.php:59
+msgid "Turn syncing on, and optionally click \"Sync all products\"."
+msgstr ""
+
+#: includes/Admin/HowToPage.php:62
+msgid "What happens afterwards"
+msgstr ""
+
+#: includes/Admin/HowToPage.php:67
+msgid "You edit a product"
+msgstr ""
+
+#: includes/Admin/HowToPage.php:68
+msgid "The listing is updated. Approved dealers publish with no review queue, so a price change stays live rather than pulling the listing down."
+msgstr ""
+
+#: includes/Admin/HowToPage.php:71
+msgid "A gun sells on American Gun Trader"
+msgstr ""
+
+#: includes/Admin/HowToPage.php:72
+msgid "The WooCommerce product is set out of stock, and a note is added to it saying why. This is the whole point of the plugin."
+msgstr ""
+
+#: includes/Admin/HowToPage.php:75
+msgid "A gun sells in your store"
+msgstr ""
+
+#: includes/Admin/HowToPage.php:76
+msgid "Its American Gun Trader listing is removed, so it is not offered to two buyers. Restocking the product brings the listing back."
+msgstr ""
+
+#: includes/Admin/HowToPage.php:79
+msgid "You trash a product"
+msgstr ""
+
+#: includes/Admin/HowToPage.php:80
+msgid "Its listing is removed from American Gun Trader. Restoring the product from the trash brings the listing back — removal is reversible on both sides. You can switch this off in the settings."
+msgstr ""
+
+#: includes/Admin/HowToPage.php:83
+msgid "A product will not publish"
+msgstr ""
+
+#: includes/Admin/HowToPage.php:84
+msgid "The AGT Sync box on that product tells you exactly why — a description under 80 characters, no photo, an unmapped category, or a firearm with no manufacturer or caliber."
+msgstr ""
+
+#: includes/Admin/HowToPage.php:87
+msgid "You disconnect"
+msgstr ""
+
+#: includes/Admin/HowToPage.php:88
+msgid "Syncing stops. Your listings stay on American Gun Trader until you remove them there."
+msgstr ""
+
+#: includes/Admin/HowToPage.php:102
+msgid "What is sent, and what is not"
+msgstr ""
+
+#: includes/Admin/HowToPage.php:103
+msgid "Only the product information needed to build the listing: its title, description, price, condition, weight, category, manufacturer, caliber and photos — plus your site address, once, at connection time, so you can recognise and revoke this store later."
+msgstr ""
+
+#: includes/Admin/HowToPage.php:104
+msgid "No customer data, no order data, and no payment data ever leaves your store."
+msgstr ""
+
+#: includes/Admin/HowToPage.php:104
+msgid "The plugin does not read your orders or your customers."
+msgstr ""
+
+#: includes/Admin/HowToPage.php:106
+msgid "Not supported yet"
+msgstr ""
+
+#: includes/Admin/HowToPage.php:107
+msgid "Variable products. One variable product would be several American Gun Trader listings — one per caliber, say — and guessing which to publish would put a price in front of a buyer that does not apply to what they picked. Variable products are skipped and flagged."
+msgstr ""
+
+#: includes/Admin/HowToPage.php:109
+msgid "Reviewing this plugin?"
+msgstr ""
+
+#: includes/Admin/HowToPage.php:110
+msgid "The connect flow needs a real American Gun Trader dealer account with an approved FFL, so it cannot be exercised without one. We will happily provide a sandbox dealer account — email support@shadowsoftware.com and we will set one up."
+msgstr ""
+
+#: includes/Admin/HowToPage.php:112
+msgid "Links"
+msgstr ""
+
+#: includes/Admin/HowToPage.php:116
+msgid "AGT Sync on American Gun Trader"
+msgstr ""
+
+#: includes/Admin/HowToPage.php:117
+msgid "Source code on GitHub"
+msgstr ""
+
+#: includes/Admin/HowToPage.php:118
+msgid "Report a bug or request a feature"
+msgstr ""
+
+#: includes/Admin/HowToPage.php:119
+msgid "Shadow Software, the developers"
+msgstr ""
+
+#: includes/Admin/HowToPage.php:120
+msgid "American Gun Trader privacy policy"
+msgstr ""
+
+#: includes/Admin/HowToPage.php:121
+msgid "American Gun Trader terms"
+msgstr ""
+
+#: includes/Admin/Notices.php:61
+msgid "Your American Gun Trader account cannot publish listings right now, so nothing is syncing."
+msgstr ""
+
+#: includes/Admin/Notices.php:62
+msgid "Fix this"
+msgstr ""
+
+#: includes/Admin/Notices.php:76
+msgid "American Gun Trader reported an unusual number of your listings sold at once, so AGT Sync held the stock changes instead of taking those products out of stock. Please review your listings and confirm."
+msgstr ""
+
+#: includes/Admin/Notices.php:77
+msgid "Review"
+msgstr ""
+
+#: includes/Admin/Notices.php:87
+msgid "AGT Sync is connected but not finished. Choose a default condition and map your categories to start publishing."
+msgstr ""
+
+#: includes/Admin/Notices.php:88
+#: includes/Admin/ProductMetaBox.php:82
+msgid "Finish setting it up"
+msgstr ""
+
+#. translators: %d: number of products.
+#: includes/Admin/Notices.php:104
+#, php-format
+msgid "%d product could not be published to American Gun Trader."
+msgid_plural "%d products could not be published to American Gun Trader."
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/Admin/Notices.php:112
+msgid "See why"
+msgstr ""
+
+#: includes/Admin/ProductMetaBox.php:49
+msgid "American Gun Trader"
+msgstr ""
+
+#. translators: %s: link to the AGT Sync settings screen.
+#: includes/Admin/ProductMetaBox.php:80
+#, php-format
+msgid "AGT Sync is not set up yet. %s"
+msgstr ""
+
+#: includes/Admin/ProductMetaBox.php:123
+msgid "Publish this product to American Gun Trader"
+msgstr ""
+
+#: includes/Admin/ProductMetaBox.php:137
+msgid "Not published yet."
+msgstr ""
+
+#: includes/Admin/ProductMetaBox.php:145
+msgid "Live on American Gun Trader"
+msgstr ""
+
+#: includes/Admin/ProductMetaBox.php:146
+msgid "Waiting to be reviewed"
+msgstr ""
+
+#: includes/Admin/ProductMetaBox.php:147
+msgid "Rejected by a moderator"
+msgstr ""
+
+#: includes/Admin/ProductMetaBox.php:148
+msgid "Sold on American Gun Trader"
+msgstr ""
+
+#: includes/Admin/ProductMetaBox.php:149
+msgid "Removed from American Gun Trader"
+msgstr ""
+
+#: includes/Admin/ProductMetaBox.php:150
+#: includes/Admin/SettingsPage.php:458
+msgid "Needs attention"
+msgstr ""
+
+#: includes/Admin/ProductMetaBox.php:151
+msgid "Not published"
+msgstr ""
+
+#: includes/Admin/ProductMetaBox.php:152
+#: includes/Admin/SettingsPage.php:460
+msgid "Queued"
+msgstr ""
+
+#: includes/Admin/ProductMetaBox.php:155
+msgid "Unknown"
+msgstr ""
+
+#: includes/Admin/ProductMetaBox.php:164
+msgid "This product was set out of stock automatically, so you do not sell it twice."
+msgstr ""
+
+#: includes/Admin/ProductMetaBox.php:171
+msgid "View the listing"
+msgstr ""
+
+#. translators: 1: number of views, 2: number of offers.
+#: includes/Admin/ProductMetaBox.php:181
+#, php-format
+msgid "%1$d views · %2$d offers"
+msgstr ""
+
+#: includes/Admin/ProductMetaBox.php:215
+msgid "This product will not publish yet:"
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:61
+#: includes/Admin/SettingsPage.php:62
+msgid "AGT Sync"
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:109
+msgid "You are not allowed to connect this store."
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:114
+msgid "The connection was cancelled."
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:118
+msgid "American Gun Trader did not send back a valid response."
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:264
+msgid "Finish connecting and configuring the plugin first."
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:308
+#: includes/Plugin.php:241
+msgid "Settings"
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:309
+#: includes/Plugin.php:260
+msgid "How it works"
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:351
+msgid "Save settings"
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:368
+msgid "Connect your store"
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:369
+msgid "AGT Sync publishes your products to American Gun Trader. You need a free American Gun Trader account with an approved FFL and an active dealer subscription."
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:370
+msgid "There is nothing to copy and paste. Click Connect, approve it on American Gun Trader, and you are done."
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:376
+msgid "Connect to American Gun Trader"
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:389
+msgid "Connected"
+msgstr ""
+
+#. translators: %s: the dealer's business name on American Gun Trader.
+#: includes/Admin/SettingsPage.php:394
+#, php-format
+msgid "This store is connected to the American Gun Trader account %s."
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:406
+msgid "This account cannot publish listings yet."
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:418
+msgid "Fix this on American Gun Trader"
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:427
+msgid "Your listings publish straight away — no review queue."
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:434
+msgid "Disconnect"
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:435
+msgid "Your listings stay on American Gun Trader."
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:454
+msgid "Live"
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:455
+msgid "In review"
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:456
+msgid "Sold on AGT"
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:457
+msgid "Removed"
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:459
+msgid "Skipped"
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:461
+msgid "Rejected"
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:464
+msgid "Your listings"
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:488
+msgid "Syncing"
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:493
+msgid "Sync my products to American Gun Trader"
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:495
+msgid "Nothing is published until you switch this on."
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:498
+msgid "Which products"
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:499
+msgid "All eligible products"
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:500
+msgid "Only products I tick individually"
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:501
+msgid "Variable products are never synced — each variation would need its own listing."
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:504
+msgid "Price to publish"
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:505
+msgid "The price a buyer pays today, including any sale"
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:506
+msgid "Always the regular price"
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:511
+msgid "Remove the listing when a product goes out of stock here"
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:513
+msgid "So a gun you sold in your store stops being offered on American Gun Trader. Restocking it brings the listing back."
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:516
+msgid "When I delete a product"
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:517
+msgid "Remove its American Gun Trader listing (restoring the product brings it back)"
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:518
+msgid "Leave the listing alone; I will remove it myself"
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:535
+msgid "New"
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:536
+msgid "Like New"
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:537
+msgid "Used"
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:538
+msgid "Damaged"
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:544
+msgid "Condition"
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:548
+msgid "Choose a default condition before syncing. Nothing publishes until you do — listing a used firearm as new is not something this plugin will guess at."
+msgstr ""
+
+#. translators: %s: the product attribute name, e.g. pa_condition.
+#: includes/Admin/SettingsPage.php:555
+#, php-format
+msgid "If a product has a %s attribute, its value is used. Otherwise the default below applies."
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:561
+msgid "Default condition"
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:563
+msgid "— Choose —"
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:575
+msgid "Most dealers sell new inventory, so \"New\" is the usual choice — but pick deliberately."
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:600
+msgid "Category mapping"
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:603
+msgid "The American Gun Trader category list could not be loaded. Try again in a moment."
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:608
+msgid "A product will not publish until its category is mapped. Mapping a parent category covers everything beneath it."
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:611
+msgid "WooCommerce category"
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:612
+msgid "American Gun Trader category"
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:624
+msgid "— Do not publish —"
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:647
+msgid "Advanced"
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:650
+msgid "Manufacturer attribute"
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:651
+msgid "Caliber attribute"
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:652
+msgid "Condition attribute"
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:654
+msgid "Requests per minute"
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:659
+msgid "How fast this store is allowed to talk to American Gun Trader. Lower it if your host is small."
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:662
+msgid "Products per batch"
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:673
+msgid "On plugin deletion"
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:677
+msgid "Also delete all AGT Sync data (the product-to-listing links and per-product settings)"
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:679
+msgid "Leave this off to keep your links, so reinstalling resumes cleanly. Turning it on never removes anything from American Gun Trader — only this store's bookkeeping."
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:695
+msgid "Sync everything now"
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:696
+msgid "Queue every eligible product. This runs in the background, in small batches, and will not slow your store down."
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:701
+msgid "Sync all products"
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:721
+msgid "Your store is connected to American Gun Trader."
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:722
+msgid "Your store has been disconnected. Your listings are still on American Gun Trader."
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:723
+msgid "Settings saved."
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:724
+msgid "Your products are being synced in the background."
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:730
+msgid "Something went wrong."
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:760
+msgid "Enabled"
+msgstr ""
+
+#: includes/Admin/SettingsPage.php:814
+msgid "You are not allowed to do that."
+msgstr ""
+
+#: includes/Api/Client.php:135
+msgid "Local rate limit reached; the sync will continue shortly."
+msgstr ""
+
+#. translators: %d: HTTP status code.
+#: includes/Api/Client.php:267
+#, php-format
+msgid "American Gun Trader returned an unexpected response (HTTP %d)."
+msgstr ""
+
+#: includes/Api/Client.php:293
+#: includes/Api/Client.php:342
+msgid "This store is not connected to American Gun Trader."
+msgstr ""
+
+#: includes/Api/Client.php:317
+msgid "A token refresh is already in progress; this job will run again shortly."
+msgstr ""
+
+#: includes/Api/Client.php:385
+msgid "Your American Gun Trader connection has expired. Please reconnect your store."
+msgstr ""
+
+#: includes/Auth/OAuthClient.php:65
+msgid "Could not register this store with American Gun Trader. Please try again."
+msgstr ""
+
+#: includes/Auth/OAuthClient.php:120
+msgid "That connection request has expired or did not come from this site. Please click Connect again."
+msgstr ""
+
+#: includes/Auth/OAuthClient.php:159
+msgid "American Gun Trader would not complete the connection. Please try again."
+msgstr ""
+
+#: includes/Plugin.php:262
+msgid "Documentation"
+msgstr ""
+
+#: includes/Plugin.php:264
+msgid "Support"
+msgstr ""
+
+#: includes/Sync/Mapper.php:96
+msgid "Variable products are not supported yet. Each variation would need its own American Gun Trader listing."
+msgstr ""
+
+#: includes/Sync/Mapper.php:100
+msgid "Only simple products can be published to American Gun Trader."
+msgstr ""
+
+#: includes/Sync/Mapper.php:118
+msgid "The product needs a name."
+msgstr ""
+
+#. translators: %d: minimum number of characters.
+#: includes/Sync/Mapper.php:126
+#, php-format
+msgid "The description must be at least %d characters so buyers know the condition and what is included."
+msgstr ""
+
+#: includes/Sync/Mapper.php:134
+msgid "The product needs a price."
+msgstr ""
+
+#: includes/Sync/Mapper.php:136
+msgid "The price is outside the range American Gun Trader accepts."
+msgstr ""
+
+#: includes/Sync/Mapper.php:142
+msgid "This product's category is not mapped to an American Gun Trader category yet."
+msgstr ""
+
+#: includes/Sync/Mapper.php:148
+msgid "No condition is set for this product, and no default has been chosen in the settings."
+msgstr ""
+
+#: includes/Sync/Mapper.php:159
+msgid "Firearms need a manufacturer. Set one on the product, or map its brand to an American Gun Trader manufacturer."
+msgstr ""
+
+#: includes/Sync/Mapper.php:163
+msgid "Firearms need a caliber. Set one on the product."
+msgstr ""
+
+#: includes/Sync/Mapper.php:170
+msgid "The product needs at least one photo."
+msgstr ""
+
+#: includes/Sync/Pusher.php:74
+msgid "Your American Gun Trader account cannot publish listings right now. Check the AGT Sync settings screen."
+msgstr ""
+
+#: includes/Sync/Pusher.php:256
+msgid "The product was removed in WooCommerce. Its American Gun Trader listing was left alone, because deletion is set to \"unlink\"."
+msgstr ""
+
+#: includes/Sync/Queue.php:406
+msgid "An unexpected error stopped this product from syncing. See WooCommerce → Status → Logs."
+msgstr ""
