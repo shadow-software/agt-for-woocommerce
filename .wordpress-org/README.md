@@ -16,9 +16,9 @@ WordPress.org reads separately, and are never included in the installable ZIP
 | `banner-772x250.png` | 772×250 | Header banner on the plugin's directory page |
 | `banner-1544x500.png` | 1544×500 | Header banner (retina) |
 | `screenshot-1.png` | — | "Screenshots" tab — Connect / OAuth settings |
-| `screenshot-2.png` | **TODO** | Category mapping screen |
-| `screenshot-3.png` | **TODO** | Product meta box (listing status) |
-| `screenshot-4.png` | **TODO** | Sold → out-of-stock writeback |
+| `screenshot-2.png` | — | Category mapping screen |
+| `screenshot-3.png` | — | Product meta box (listing status) |
+| `screenshot-4.png` | — | Sold → out-of-stock writeback |
 
 The `screenshot-N.png` files map, in order, to the numbered list under
 `== Screenshots ==` in `readme.txt`. Capture them from a live WooCommerce store

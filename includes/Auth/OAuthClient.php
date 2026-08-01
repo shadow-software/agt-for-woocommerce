@@ -8,7 +8,6 @@
 namespace AgtSync\Auth;
 
 use AgtSync\Api\ApiException;
-use AgtSync\Api\Client;
 use AgtSync\Logger;
 
 defined( 'ABSPATH' ) || exit;
@@ -89,10 +88,13 @@ final class OAuthClient {
 
 		$pkce = Pkce::begin();
 
+		// Do not pre-encode redirect_uri — add_query_arg() already encodes values.
+		// Double-encoding would break the RFC 6749 exact-match against the token
+		// exchange (which sends the plain URI).
 		return add_query_arg(
 			array(
 				'client_id'             => Credentials::client_id(),
-				'redirect_uri'          => rawurlencode( self::redirect_uri() ),
+				'redirect_uri'          => self::redirect_uri(),
 				'response_type'         => 'code',
 				'state'                 => $pkce['state'],
 				'code_challenge'        => $pkce['challenge'],
@@ -187,10 +189,25 @@ final class OAuthClient {
 	 * @throws ApiException When the call fails.
 	 */
 	public static function refresh_account(): array {
-		$client   = new Client();
-		$response = $client->get( '/me' );
+		try {
+			$model     = \AgtSync\Api\SdkFactory::account()->dealerApiMe();
+			$sanitized = \ShadowSoftware\Agt\ObjectSerializer::sanitizeForSerialization( $model );
 
-		$account = isset( $response['data'] ) && is_array( $response['data'] ) ? $response['data'] : array();
+			if ( is_object( $sanitized ) ) {
+				$sanitized = (array) $sanitized;
+			}
+
+			$response = is_array( $sanitized ) ? $sanitized : array();
+		} catch ( \ShadowSoftware\Agt\ApiException $e ) {
+			throw ApiException::make(
+				esc_html( $e->getMessage() ),
+				(int) $e->getCode(),
+				'',
+				array()
+			);
+		}
+
+		$account = isset( $response['data'] ) && is_array( $response['data'] ) ? $response['data'] : $response;
 
 		Credentials::save_account( $account );
 

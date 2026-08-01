@@ -22,7 +22,6 @@
 /SECURITY.md
 
 # Dependency manager / tooling metadata (vendor/ IS shipped — runtime SDK)
-/composer.json
 /composer.lock
 /auth.json
 /node_modules

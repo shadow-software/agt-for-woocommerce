@@ -4,3 +4,5 @@
  *
  * @package AgtSync
  */
+
+defined( 'ABSPATH' ) || exit;

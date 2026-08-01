@@ -8,7 +8,6 @@
 namespace AgtSync\Taxonomy;
 
 use AgtSync\Api\ApiException;
-use AgtSync\Api\Client;
 use AgtSync\Logger;
 
 defined( 'ABSPATH' ) || exit;
@@ -49,20 +48,30 @@ final class Repository {
 		}
 
 		try {
-			$client   = new Client();
-			$response = $client->get( '/taxonomy' );
+			$model     = \AgtSync\Api\SdkFactory::account()->dealerApiTaxonomy();
+			$sanitized = \ShadowSoftware\Agt\ObjectSerializer::sanitizeForSerialization( $model );
 
-			$taxonomy = isset( $response['data'] ) && is_array( $response['data'] ) ? $response['data'] : array();
+			if ( is_object( $sanitized ) ) {
+				$sanitized = (array) $sanitized;
+			}
+
+			$response = is_array( $sanitized ) ? $sanitized : array();
+			$taxonomy = isset( $response['data'] ) && is_array( $response['data'] ) ? $response['data'] : $response;
 
 			if ( ! empty( $taxonomy ) ) {
 				set_transient( self::TRANSIENT, $taxonomy, self::TTL );
 			}
 
 			return $taxonomy;
+		} catch ( \ShadowSoftware\Agt\ApiException $e ) {
+			Logger::warn( 'Could not refresh the American Gun Trader taxonomy: ' . $e->getMessage() );
+
+			$cached = get_transient( self::TRANSIENT );
+
+			return is_array( $cached ) ? $cached : array();
 		} catch ( ApiException $e ) {
 			Logger::warn( 'Could not refresh the American Gun Trader taxonomy: ' . $e->getMessage() );
 
-			// Serve whatever we last had rather than breaking the settings screen.
 			$cached = get_transient( self::TRANSIENT );
 
 			return is_array( $cached ) ? $cached : array();

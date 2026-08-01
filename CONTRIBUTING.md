@@ -14,7 +14,7 @@ on an approach before the code exists than after.
 
 The plugin requires **`shadow-software/agt-php-sdk`** at runtime (OpenAPI-
 generated dealer API client). Until that package is on Packagist, `composer.json`
-lists the GitHub VCS repository. Create a local `auth.json` (gitignored) with a
+is on Packagist. For private SDK worktrees only, create a local `auth.json` (gitignored) with a
 GitHub token that can read `shadow-software/agt-php-sdk`:
 
 ```json
@@ -55,7 +55,7 @@ go through `AgtSync\Api\SdkFactory` so the cut-over to the SDK is mechanical.
 - Escape at the point of output, sanitize at the point of input, and check a nonce
   *and* a capability on every action. No exceptions.
 - Prefer the generated SDK (`SdkFactory`) for new dealer-API calls. The legacy
-  `wp_remote_*` client remains until the cut-over is complete — do not grow it.
+  Dealer HTTP uses the Packagist SDK (Guzzle). Prefer `SdkFactory` for typed account/listing calls.
 - Every user-facing string translatable, with the `agt-sync-for-woocommerce` text
   domain.
 - Never log a token. `Logger` redacts them, but do not rely on it.

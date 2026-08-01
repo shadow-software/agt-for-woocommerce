@@ -98,7 +98,7 @@ is how these plugins destroy a merchant's data.
 
 ```
 Auth/         OAuth 2.0 + PKCE, dynamic registration, token store
-Api/          wp_remote_* client, multipart encoder, token bucket
+Api/          Packagist agt-php-sdk (Guzzle) + SdkFactory, multipart, token bucket
 Sync/         Mapper (WC -> AGT), Pusher, Puller, Queue, LinkMap
 Taxonomy/     Cached AGT categories/manufacturers/calibers
 Admin/        Settings, category mapping, product meta box, notices
@@ -240,7 +240,7 @@ respective owners; this plugin is an independent, unofficial integration.
 | [**Broadside Blocks**](https://github.com/shadow-software/broadside-blocks-for-wordpress) | The editorial furniture that ships with it — short answer, takeaways, contents, FAQ schema, sources. |
 | [**Crypto for WooCommerce**](https://github.com/shadow-software/crypto-for-woocommerce) | Free, self-custodial crypto payments — ETH, USDC, USDT & Bitcoin, confirmed on-chain. [On WordPress.org →](https://wordpress.org/plugins/shadow-software-crypto-for-woocommerce/) |
 | [**AGT Sync for WooCommerce**](https://github.com/shadow-software/agt-for-woocommerce) | Sync your WooCommerce store with your American Gun Trader dealer listings. |
-| [**DabDash Sync for WordPress**](https://github.com/shadow-software/dabdash-sync-for-wordpress) | Verification, loyalty, and consent — DabDash as the source of truth. |
+| [**DabDash Sync for WooCommerce**](https://github.com/shadow-software/dabdash-for-woocommerce) | Verification, loyalty, and consent — DabDash as the source of truth. |
 
 **SDKs**
 

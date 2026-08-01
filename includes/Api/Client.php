@@ -2,6 +2,10 @@
 /**
  * The American Gun Trader API client.
  *
+ * Transport is the Packagist SDK (shadow-software/agt-php-sdk → Guzzle), not
+ * wp_remote_*. Token refresh, rate limiting, and ApiException mapping stay here
+ * so the sync engine keeps its existing contract.
+ *
  * @package AgtSync
  */
 
@@ -9,15 +13,18 @@ namespace AgtSync\Api;
 
 use AgtSync\Auth\Credentials;
 use AgtSync\Logger;
+use GuzzleHttp\Client as GuzzleClient;
+use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Exception\RequestException;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
  * Every call to American Gun Trader goes through here.
  *
- * Uses wp_remote_* (never cURL directly), refreshes the access token when it has
- * expired, honours the server's rate limit, and turns a failure into an
- * ApiException the sync engine can reason about.
+ * Uses the Packagist SDK's Guzzle client (never raw cURL), refreshes the access
+ * token when it has expired, honours the server's rate limit, and turns a
+ * failure into an ApiException the sync engine can reason about.
  */
 final class Client {
 
@@ -194,37 +201,46 @@ final class Client {
 			$body                    = wp_json_encode( $args['json'] );
 		}
 
-		$response = wp_remote_request(
-			$url,
+		$config = SdkFactory::configuration( $token );
+		$http   = new GuzzleClient(
 			array(
-				'method'             => $method,
-				'timeout'            => self::TIMEOUT,
-				'redirection'        => 0,
-				'reject_unsafe_urls' => true,
-				'headers'            => $headers,
-				'body'               => $body,
-				'user-agent'         => 'agt-sync-for-woocommerce/' . AGT_SYNC_VERSION . '; ' . home_url(),
+				'timeout'         => self::TIMEOUT,
+				'allow_redirects' => false,
+				'http_errors'     => false,
+				'headers'         => array(
+					'User-Agent' => $config->getUserAgent(),
+				),
 			)
 		);
 
-		if ( is_wp_error( $response ) ) {
-			$exception = ApiException::transport( $response->get_error_message() );
+		try {
+			$response = $http->request(
+				$method,
+				$url,
+				array(
+					'headers' => $headers,
+					'body'    => $body,
+				)
+			);
+		} catch ( GuzzleException $e ) {
+			$message = $e instanceof RequestException && $e->hasResponse()
+				? (string) $e->getMessage()
+				: $e->getMessage();
+
+			$exception = ApiException::transport( $message );
 
 			throw $exception;
 		}
 
-		$raw_headers = wp_remote_retrieve_headers( $response );
-		$header_map  = array();
+		$header_map = array();
 
-		if ( is_object( $raw_headers ) && method_exists( $raw_headers, 'getAll' ) ) {
-			foreach ( (array) $raw_headers->getAll() as $key => $value ) {
-				$header_map[ strtolower( (string) $key ) ] = is_array( $value ) ? (string) reset( $value ) : (string) $value;
-			}
+		foreach ( $response->getHeaders() as $key => $values ) {
+			$header_map[ strtolower( (string) $key ) ] = isset( $values[0] ) ? (string) $values[0] : '';
 		}
 
 		return array(
-			'status'  => (int) wp_remote_retrieve_response_code( $response ),
-			'body'    => (string) wp_remote_retrieve_body( $response ),
+			'status'  => $response->getStatusCode(),
+			'body'    => (string) $response->getBody(),
 			'headers' => $header_map,
 		);
 	}

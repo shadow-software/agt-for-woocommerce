@@ -120,13 +120,15 @@ jobs:
           unzip -l "$zip" | grep -q 'agt-sync-for-woocommerce/vendor/autoload.php' \
             || { echo "::error::vendor/autoload.php missing — SDK not packaged"; exit 1; }
 
-          if unzip -l "$zip" | grep -Eq 'agt-sync-for-woocommerce/(tests/|docs/|\.github|composer\.(json|lock)|phpcs|phpstan|phpunit|\.distignore|\.gitattributes|\.wordpress-org|README\.md|CONTRIBUTING\.md|SECURITY\.md)'; then
+          if unzip -l "$zip" | grep -Eq 'agt-sync-for-woocommerce/(tests/|docs/|\.github|composer\.lock|phpcs|phpstan|phpunit|\.distignore|\.gitattributes|\.wordpress-org|README\.md|CONTRIBUTING\.md|SECURITY\.md)'; then
             echo "::error::Development or repo files leaked into the installable ZIP"
             exit 1
           fi
 
-          echo "ZIP is lean and installable."
+          unzip -l "$zip" | grep -q 'agt-sync-for-woocommerce/composer.json' \
+            || { echo "::error::composer.json missing — required alongside vendor/"; exit 1; }
 
+          echo "ZIP is lean and installable."
       - name: Extract release notes from the changelog
         id: notes
         run: |
