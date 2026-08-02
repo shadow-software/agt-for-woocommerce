@@ -39,11 +39,13 @@ The How-to admin screen also points reviewers at support@shadowsoftware.com.
 ## Still blocking submission
 
 1. **SVN credentials** — set `SVN_USERNAME` / `SVN_PASSWORD` on the GitHub repo
-   (later).
-2. **AGT-side pages** — confirm live:
+   (later — ZIP upload works without them).
+2. **Confirm AGT marketing pages in a normal browser** (Cloudflare may 403 bots):
    - `/integrations/woocommerce`
    - `/privacy`, `/terms`
-   - `/settings/connections`
+   - `/settings/connections` (must exist for connected dealers)
+
+Sandbox login verified 2026-08-02 (302 → `/dashboard`).
 
 ## How to submit
 

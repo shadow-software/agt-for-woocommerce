@@ -32,7 +32,7 @@ final class SdkFactory {
 	 */
 	public static function configuration( $access_token = null ) {
 		$token = null !== $access_token ? (string) $access_token : Credentials::access_token();
-		$host  = untrailingslashit( AGT_SYNC_API_BASE ) . '/api/v1/dealer';
+		$host  = Host::api_base() . '/api/v1/dealer';
 
 		$config = Configuration::getDefaultConfiguration()
 			->setHost( $host )

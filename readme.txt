@@ -171,43 +171,35 @@ https://github.com/shadow-software/agt-for-woocommerce/issues
 
 This plugin connects your store to **American Gun Trader**
 (americanguntrader.com), an online firearms marketplace operated by Shadow
-Software LLC. It is the only external service the plugin contacts, and it is the
-entire purpose of the plugin: to publish your listings there and read their status
-back.
+Software LLC. It is the only external service the plugin contacts.
 
-Nothing is sent until you connect your store and approve the connection.
+Nothing is sent until you click **Connect** and approve the connection on
+American Gun Trader.
 
-**What it is for**
+**1. OAuth (americanguntrader.com/oauth/dealer/…)**
 
-Publishing your WooCommerce products as listings on your American Gun Trader
-dealer account, and reading back the status of those listings so your store can
-reflect them.
+* **What it is for:** registering this store as an OAuth client (RFC 7591),
+  obtaining an access token, refreshing it, and revoking it on disconnect or
+  uninstall.
+* **When it is called:** Connect / Disconnect / token refresh / uninstall.
+* **What is sent:** site name and URL at registration; authorization code at
+  callback; client id and refresh token when refreshing or revoking. No customer
+  or order data.
+* Endpoints used: `/oauth/dealer/register`, `/oauth/dealer/authorize`,
+  `/oauth/dealer/token`, `/oauth/dealer/revoke`.
 
-**When it is called**
+**2. Dealer API (americanguntrader.com/api/v1/dealer/…)**
 
-* When you click **Connect** (to register this store and get an access token).
-* When a product you have chosen to sync is created, updated, or deleted.
-* On a schedule (hourly by default), to check the status of your own listings.
-* Once a day, to refresh the list of American Gun Trader categories,
-  manufacturers and calibers.
-
-**What data is sent**
-
-Only the product information needed to create the listing you are publishing:
-
-* the product's **title, description, price, condition, weight**,
-* its **category, manufacturer and caliber**,
-* its **photos** (up to 10), and
-* the **site URL** of your store, at connection time, so you can recognise and
-  revoke the connection later.
-
-**No customer data, no order data, no payment data, and no personal information
-is ever sent.** The plugin does not read your orders or your customers.
-
-**What data is received**
-
-The status of your own listings: whether each is live, pending, sold or removed,
-its view and bid counts, and its public URL.
+* **What it is for:** publishing WooCommerce products as listings, reading
+  listing status (live / sold / removed), and refreshing taxonomy lists
+  (categories, manufacturers, calibers).
+* **When it is called:** when a synced product is created, updated, or deleted;
+  on an hourly status pull; once a day for taxonomy refresh.
+* **What is sent:** product title, description, price, condition, weight,
+  category / manufacturer / caliber, and up to 10 photos. **No customer data,
+  no order data, no payment data.**
+* **What is received:** listing status, view/bid counts, and public URL for
+  your own listings.
 
 **Terms and privacy**
 
@@ -219,13 +211,16 @@ its view and bid counts, and its public URL.
 == Privacy ==
 
 This plugin does not create user accounts, does not set cookies, does not track
-visitors, and does not send any personal data to Shadow Software or to any other
-service.
+visitors, and does not send any personal data about your customers to Shadow
+Software or to any other service.
 
-It stores, in your WordPress database: the connection tokens for your American Gun
-Trader account, your category mappings, and — for each product you sync — the id
-of its American Gun Trader listing and its last known status. Deleting the plugin
-removes the settings and tokens; your products and your listings are left alone.
+It stores, in your WordPress database: the connection tokens for your American
+Gun Trader account, your category mappings, and — for each product you sync —
+the id of its American Gun Trader listing and its last known status.
+
+Deleting the plugin removes settings and tokens by default. Product listing
+links are kept unless you check **Purge listing data on uninstall** on the
+settings screen (so a temporary uninstall does not orphan your AGT catalogue).
 
 The only data that leaves your store is the product information described under
 **External services** above, and only for the products you choose to publish.
@@ -242,11 +237,12 @@ The only data that leaves your store is the product information described under
 == Changelog ==
 
 = 1.0.1 =
-* Housekeeping. The source repository moved to
-  github.com/shadow-software/agt-for-woocommerce and every link now points there
-  directly rather than through a redirect.
-* The plugin itself is unchanged — no code, no behaviour, no settings. The plugin
-  slug remains `agt-sync-for-woocommerce`.
+* Host allowlist for AGT API / OAuth (`americanguntrader.com`; local hosts only
+  under WP_DEBUG).
+* External services section split into OAuth vs dealer API (Crypto-style depth).
+* Privacy notes clarify default uninstall vs optional purge of listing meta.
+* Packagist SDK transport, OAuth redirect_uri fix, ABSPATH on silence stubs,
+  WP.org assets and screenshots.
 
 = 1.0.0 =
 * Initial release: connect a WooCommerce store to an American Gun Trader dealer
@@ -258,7 +254,7 @@ The only data that leaves your store is the product information described under
 == Upgrade Notice ==
 
 = 1.0.1 =
-Documentation and repository URL housekeeping only. No behaviour change.
+Host allowlist, richer External services docs, and WP.org packaging fixes.
 
 = 1.0.0 =
 Initial release.

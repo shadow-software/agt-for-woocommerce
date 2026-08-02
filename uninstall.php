@@ -107,10 +107,11 @@ function agt_sync_uninstall_revoke_token() {
 		return;
 	}
 
-	$base = defined( 'AGT_SYNC_API_BASE' ) ? AGT_SYNC_API_BASE : 'https://americanguntrader.com';
+	// Uninstall runs without the plugin bootstrap — revoke against production only.
+	$base = 'https://americanguntrader.com';
 
 	wp_remote_post(
-		rtrim( $base, '/' ) . '/oauth/dealer/revoke',
+		$base . '/oauth/dealer/revoke',
 		array(
 			'timeout'            => 5,
 			'blocking'           => true,

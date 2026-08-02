@@ -32,10 +32,10 @@ define( 'AGT_SYNC_URL', plugin_dir_url( __FILE__ ) );
 /**
  * The American Gun Trader site this plugin talks to.
  *
- * Overridable with the AGT_SYNC_API_BASE constant so the plugin can be developed
- * against a local AGT. Not a setting: a merchant has no reason to point their
- * catalogue at a different host, and making it one would turn a misconfiguration
- * into a data leak.
+ * Defaults to production. Overridable with AGT_SYNC_API_BASE for local AGT
+ * development — non-allowlisted hosts are ignored unless WP_DEBUG is on and the
+ * host is local (see AgtSync\Api\Host). Not a settings field: a merchant must
+ * not be able to point catalogue traffic at an arbitrary host.
  */
 if ( ! defined( 'AGT_SYNC_API_BASE' ) ) {
 	define( 'AGT_SYNC_API_BASE', 'https://americanguntrader.com' );

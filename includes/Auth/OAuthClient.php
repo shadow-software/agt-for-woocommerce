@@ -8,6 +8,7 @@
 namespace AgtSync\Auth;
 
 use AgtSync\Api\ApiException;
+use AgtSync\Api\Host;
 use AgtSync\Logger;
 
 defined( 'ABSPATH' ) || exit;
@@ -288,6 +289,6 @@ final class OAuthClient {
 	 * @return string
 	 */
 	private static function oauth_url( string $path ): string {
-		return rtrim( AGT_SYNC_API_BASE, '/' ) . '/oauth/dealer/' . ltrim( $path, '/' );
+		return Host::api_base() . '/oauth/dealer/' . ltrim( $path, '/' );
 	}
 }

@@ -107,7 +107,7 @@ final class HowToPage {
 		echo '<p>' . esc_html__( 'Variable products. One variable product would be several American Gun Trader listings — one per caliber, say — and guessing which to publish would put a price in front of a buyer that does not apply to what they picked. Variable products are skipped and flagged.', 'agt-sync-for-woocommerce' ) . '</p>';
 
 		echo '<h2>' . esc_html__( 'Reviewing this plugin?', 'agt-sync-for-woocommerce' ) . '</h2>';
-		echo '<p>' . esc_html__( 'The connect flow needs a real American Gun Trader dealer account with an approved FFL, so it cannot be exercised without one. We will happily provide a sandbox dealer account — email support@shadowsoftware.com and we will set one up.', 'agt-sync-for-woocommerce' ) . '</p>';
+		echo '<p>' . esc_html__( 'The connect flow needs a real American Gun Trader dealer account with an approved FFL. A sandbox dealer account is available for Plugin Review — email support@shadowsoftware.com and we will send credentials the same day (or use the account noted in our WordPress.org submission).', 'agt-sync-for-woocommerce' ) . '</p>';
 
 		echo '<h2>' . esc_html__( 'Links', 'agt-sync-for-woocommerce' ) . '</h2>';
 		echo '<ul class="agt-sync-list">';

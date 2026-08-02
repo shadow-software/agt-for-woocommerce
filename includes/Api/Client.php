@@ -472,7 +472,7 @@ final class Client {
 	 * @return string
 	 */
 	private function url( string $path ): string {
-		return rtrim( AGT_SYNC_API_BASE, '/' ) . '/api/v1/dealer/' . ltrim( $path, '/' );
+		return Host::api_base() . '/api/v1/dealer/' . ltrim( $path, '/' );
 	}
 
 	/**
@@ -482,6 +482,6 @@ final class Client {
 	 * @return string
 	 */
 	private function oauth_url( string $path ): string {
-		return rtrim( AGT_SYNC_API_BASE, '/' ) . '/oauth/dealer/' . ltrim( $path, '/' );
+		return Host::api_base() . '/oauth/dealer/' . ltrim( $path, '/' );
 	}
 }

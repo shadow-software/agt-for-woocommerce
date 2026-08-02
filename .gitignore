@@ -9,3 +9,8 @@
 .DS_Store
 Thumbs.db
 /auth.json
+
+# Local-only reviewer credentials (never commit)
+/docs/REVIEWER-SANDBOX.local.md
+*.local.md
+
