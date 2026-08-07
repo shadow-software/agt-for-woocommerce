@@ -4,8 +4,11 @@
 # WordPress.org submission checklist
 
 Canonical repo: **`agt-for-woocommerce`** (slug `agt-sync-for-woocommerce`).
-Do not submit from `agt-sync-for-woocommerce` — that copy is
-frozen at 1.0.0 after the GitHub rename.
+The slug is permanent; the repo name is not, and the pre-rename URL
+`shadow-software/agt-sync-for-woocommerce` 301-redirects here. There is no second
+repo. Submit only from a checkout whose `origin` is the canonical URL — an old
+clone still pointed at the redirect can sit at 1.0.0 indefinitely and look like a
+separate project.
 
 ## Ready
 
