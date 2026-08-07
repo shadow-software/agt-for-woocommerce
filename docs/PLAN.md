@@ -312,7 +312,7 @@ review, so publish these pages before submitting):
 Mirrors the crypto plugin one-for-one.
 
 ```
-shadow-software-agt-sync-for-woocommerce/
+agt-sync-for-woocommerce/
 ├── agt-sync-for-woocommerce.php    # header, constants, hardened autoloader, WC guard
 ├── uninstall.php                   # delete options/transients; KEEP the product↔listing map
 ├── index.php                       # "Silence is golden."

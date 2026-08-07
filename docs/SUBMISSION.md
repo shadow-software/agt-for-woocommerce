@@ -4,7 +4,7 @@
 # WordPress.org submission checklist
 
 Canonical repo: **`agt-for-woocommerce`** (slug `agt-sync-for-woocommerce`).
-Do not submit from `shadow-software-agt-sync-for-woocommerce` — that copy is
+Do not submit from `agt-sync-for-woocommerce` — that copy is
 frozen at 1.0.0 after the GitHub rename.
 
 ## Ready
