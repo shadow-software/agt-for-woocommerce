@@ -1,0 +1,115 @@
+name: Bump agt-php-sdk
+
+# Closes the last manual step in the release chain: dealer API change ->
+# agt-php-sdk release -> (here) this plugin picks it up automatically.
+# agt-php-sdk's release.yml fires repository_dispatch (php-sdk-released) after
+# a real publish. This job updates the Composer dependency and, only if that
+# actually changed anything, bumps the plugin's own version and pushes a tag —
+# which is exactly the trigger release.yml (GitHub Release) and deploy.yml
+# (WordPress.org SVN) already listen for. No release logic is duplicated here.
+#
+# workflow_dispatch exists to dry-run against an already-published SDK version
+# without waiting for a new one, or to replay a dispatch that arrived while
+# this workflow didn't exist yet.
+on:
+  repository_dispatch:
+    types: [php-sdk-released]
+  workflow_dispatch:
+    inputs:
+      sdk_version:
+        description: "agt-php-sdk version to pick up, e.g. 0.2.9"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: bump-sdk
+  cancel-in-progress: false
+
+jobs:
+  bump:
+    name: Update SDK dependency and release if changed
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: master
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          tools: composer:v2
+
+      - name: Resolve the dispatched SDK version
+        id: sdk
+        run: |
+          version="${{ github.event.client_payload.version || inputs.sdk_version }}"
+          if [ -z "$version" ]; then
+            echo "::error::No SDK version in the dispatch payload or workflow input."
+            exit 1
+          fi
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+
+      - name: Update the agt-php-sdk Composer dependency
+        env:
+          GH_TOKEN: ${{ secrets.SDK_RELEASE_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -n "$GH_TOKEN" ]; then
+            composer config --global github-oauth.github.com "$GH_TOKEN"
+          fi
+          minor="$(echo "${{ steps.sdk.outputs.version }}" | cut -d. -f1,2)"
+          composer require "shadow-software/agt-php-sdk:^${minor}" --no-interaction --with-all-dependencies
+
+      - name: Stop here if the dependency didn't actually change
+        id: diff
+        run: |
+          if git diff --quiet -- composer.json composer.lock; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "agt-php-sdk ${{ steps.sdk.outputs.version }} resolves to what's already locked — nothing to release."
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Bump the plugin version (patch)
+        id: bump
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          set -euo pipefail
+          sdk_version="${{ steps.sdk.outputs.version }}"
+
+          current="$(grep -oE '^Stable tag:\s*\S+' readme.txt | awk '{print $NF}')"
+          IFS='.' read -r major minor patch <<< "$current"
+          new="${major}.${minor}.$((patch + 1))"
+
+          echo "Bumping plugin ${current} -> ${new} (agt-php-sdk ${sdk_version})"
+
+          sed -i "s/^ \* Version:.*/ * Version:           ${new}/" agt-sync-for-woocommerce.php
+          sed -i "s/AGT_SYNC_VERSION', '[^']*'/AGT_SYNC_VERSION', '${new}'/" agt-sync-for-woocommerce.php
+          sed -i "s/^Stable tag:.*/Stable tag: ${new}/" readme.txt
+
+          # Insert the new changelog entry right after "== Changelog ==".
+          entry="\n= ${new} =\n* Updated the bundled AGT PHP SDK to ${sdk_version}.\n"
+          awk -v entry="$entry" '
+            { print }
+            /^== Changelog ==$/ && !done { printf "%s", entry; done = 1 }
+          ' readme.txt > readme.txt.new
+          mv readme.txt.new readme.txt
+
+          echo "version=${new}" >> "$GITHUB_OUTPUT"
+
+      - name: Commit and tag
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          set -euo pipefail
+          git config user.name "sdk-dispatch-bot"
+          git config user.email "noreply@shadowsoftware.com"
+          git add composer.json composer.lock agt-sync-for-woocommerce.php readme.txt
+          git commit -m "chore: bump agt-php-sdk to ${{ steps.sdk.outputs.version }}, release ${{ steps.bump.outputs.version }}"
+          git tag "${{ steps.bump.outputs.version }}"
+          git push origin master
+          git push origin "${{ steps.bump.outputs.version }}"
