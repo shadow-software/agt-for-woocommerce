@@ -2,18 +2,25 @@ name: Bump agt-php-sdk
 
 # Closes the last manual step in the release chain: dealer API change ->
 # agt-php-sdk release -> (here) this plugin picks it up automatically.
-# agt-php-sdk's release.yml fires repository_dispatch (php-sdk-released) after
-# a real publish. This job updates the Composer dependency and, only if that
-# actually changed anything, bumps the plugin's own version and pushes a tag —
-# which is exactly the trigger release.yml (GitHub Release) and deploy.yml
-# (WordPress.org SVN) already listen for. No release logic is duplicated here.
+# agt-php-sdk's release.yml uses shadow-software/sdk-release's built-in
+# consumer_repo mechanism, which fires repository_dispatch (sdk-updated) to
+# this repo after a real publish. This job updates the Composer dependency
+# and, only if that actually changed anything, bumps the plugin's own version
+# and pushes a tag — which is exactly the trigger release.yml (GitHub
+# Release) and deploy.yml (WordPress.org SVN) already listen for. No release
+# logic is duplicated here.
+#
+# sdk-updated is a generic event name shared by every SDK in the
+# shadow-software org that declares a consumer_repo, not one this repo
+# invented — the package filter in "Resolve the dispatched SDK version"
+# below is what scopes it to agt-php-sdk specifically.
 #
 # workflow_dispatch exists to dry-run against an already-published SDK version
 # without waiting for a new one, or to replay a dispatch that arrived while
 # this workflow didn't exist yet.
 on:
   repository_dispatch:
-    types: [php-sdk-released]
+    types: [sdk-updated]
   workflow_dispatch:
     inputs:
       sdk_version:
@@ -48,6 +55,13 @@ jobs:
         id: sdk
         run: |
           set -euo pipefail
+          package="${{ github.event.client_payload.package }}"
+          if [ -n "$package" ] && [ "$package" != "shadow-software/agt-php-sdk" ]; then
+            echo "::notice::sdk-updated dispatch was for ${package}, not agt-php-sdk — nothing for this repo to do."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
           version="${{ github.event.client_payload.version || inputs.sdk_version }}"
           if [ -z "$version" ]; then
             echo "::error::No SDK version in the dispatch payload or workflow input."
@@ -57,12 +71,14 @@ jobs:
 
       - name: Record the currently locked agt-php-sdk version
         id: before
+        if: steps.sdk.outputs.skip != 'true'
         run: |
           set -euo pipefail
           before="$(jq -r '.packages[] | select(.name=="shadow-software/agt-php-sdk") | .version' composer.lock)"
           echo "version=${before}" >> "$GITHUB_OUTPUT"
 
       - name: Update the agt-php-sdk Composer dependency
+        if: steps.sdk.outputs.skip != 'true'
         env:
           GH_TOKEN: ${{ secrets.SDK_RELEASE_TOKEN }}
         run: |
@@ -82,6 +98,7 @@ jobs:
       # be a clean no-op.
       - name: Stop here if the locked SDK version didn't actually change
         id: diff
+        if: steps.sdk.outputs.skip != 'true'
         run: |
           set -euo pipefail
           after="$(jq -r '.packages[] | select(.name=="shadow-software/agt-php-sdk") | .version' composer.lock)"
