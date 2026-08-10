@@ -21,6 +21,18 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Regression test for .github/scripts/bump-plugin-version.sh (used by
+  # bump-sdk.yml to auto-release when agt-php-sdk publishes). No PHP/Composer
+  # needed — just bash + jq, both preinstalled on ubuntu-latest.
+  bump-sdk-script:
+    name: bump-plugin-version.sh regression test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Run the test
+        run: bash tests/shell/bump-plugin-version.sh
+
   quality:
     name: Lint · Analyse · Test (PHP ${{ matrix.php }})
     runs-on: ubuntu-latest

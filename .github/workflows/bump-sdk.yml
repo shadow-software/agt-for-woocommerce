@@ -47,12 +47,20 @@ jobs:
       - name: Resolve the dispatched SDK version
         id: sdk
         run: |
+          set -euo pipefail
           version="${{ github.event.client_payload.version || inputs.sdk_version }}"
           if [ -z "$version" ]; then
             echo "::error::No SDK version in the dispatch payload or workflow input."
             exit 1
           fi
           echo "version=${version}" >> "$GITHUB_OUTPUT"
+
+      - name: Record the currently locked agt-php-sdk version
+        id: before
+        run: |
+          set -euo pipefail
+          before="$(jq -r '.packages[] | select(.name=="shadow-software/agt-php-sdk") | .version' composer.lock)"
+          echo "version=${before}" >> "$GITHUB_OUTPUT"
 
       - name: Update the agt-php-sdk Composer dependency
         env:
@@ -65,42 +73,33 @@ jobs:
           minor="$(echo "${{ steps.sdk.outputs.version }}" | cut -d. -f1,2)"
           composer require "shadow-software/agt-php-sdk:^${minor}" --no-interaction --with-all-dependencies
 
-      - name: Stop here if the dependency didn't actually change
+      # Diffs the actually-resolved package version rather than the raw
+      # composer.lock/composer.json bytes: composer.lock's content-hash
+      # changes whenever composer.json does, even when nothing resolved
+      # differently, which would otherwise flip this to "changed" and cut a
+      # release with nothing in it. A same-version dispatch (a re-run, or a
+      # dispatch that arrives after a human already bumped the plugin) must
+      # be a clean no-op.
+      - name: Stop here if the locked SDK version didn't actually change
         id: diff
         run: |
-          if git diff --quiet -- composer.json composer.lock; then
+          set -euo pipefail
+          after="$(jq -r '.packages[] | select(.name=="shadow-software/agt-php-sdk") | .version' composer.lock)"
+          if [ "${{ steps.before.outputs.version }}" = "$after" ]; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
-            echo "agt-php-sdk ${{ steps.sdk.outputs.version }} resolves to what's already locked — nothing to release."
+            echo "agt-php-sdk is already locked at ${after} — nothing to release."
+            git checkout -- composer.json composer.lock
           else
             echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "agt-php-sdk ${{ steps.before.outputs.version }} -> ${after}"
           fi
 
       - name: Bump the plugin version (patch)
         id: bump
         if: steps.diff.outputs.changed == 'true'
         run: |
-          set -euo pipefail
-          sdk_version="${{ steps.sdk.outputs.version }}"
-
-          current="$(grep -oE '^Stable tag:\s*\S+' readme.txt | awk '{print $NF}')"
-          IFS='.' read -r major minor patch <<< "$current"
-          new="${major}.${minor}.$((patch + 1))"
-
-          echo "Bumping plugin ${current} -> ${new} (agt-php-sdk ${sdk_version})"
-
-          sed -i "s/^ \* Version:.*/ * Version:           ${new}/" agt-sync-for-woocommerce.php
-          sed -i "s/AGT_SYNC_VERSION', '[^']*'/AGT_SYNC_VERSION', '${new}'/" agt-sync-for-woocommerce.php
-          sed -i "s/^Stable tag:.*/Stable tag: ${new}/" readme.txt
-
-          # Insert the new changelog entry right after "== Changelog ==".
-          entry="\n= ${new} =\n* Updated the bundled AGT PHP SDK to ${sdk_version}.\n"
-          awk -v entry="$entry" '
-            { print }
-            /^== Changelog ==$/ && !done { printf "%s", entry; done = 1 }
-          ' readme.txt > readme.txt.new
-          mv readme.txt.new readme.txt
-
-          echo "version=${new}" >> "$GITHUB_OUTPUT"
+          new_version="$(bash .github/scripts/bump-plugin-version.sh "${{ steps.sdk.outputs.version }}")"
+          echo "version=${new_version}" >> "$GITHUB_OUTPUT"
 
       - name: Commit and tag
         if: steps.diff.outputs.changed == 'true'
