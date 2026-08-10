@@ -140,6 +140,17 @@ jobs:
             body="See the changelog in readme.txt."
           fi
 
+          # Self-checking rather than a hardcoded claim: the WP.org directory
+          # listing isn't live yet (confirmed 404 as of this comment), but
+          # checking on every release means this line flips itself the day
+          # SVN publish actually happens — no separate manual follow-up.
+          wp_org_url="https://wordpress.org/plugins/agt-sync-for-woocommerce/"
+          if curl -fsS -o /dev/null "$wp_org_url"; then
+            wp_org_line="**Also on WordPress.org:** ${wp_org_url}"
+          else
+            wp_org_line="**Coming soon to WordPress.org.** Not yet published — install from the ZIP below for now."
+          fi
+
           {
             echo "## AGT Sync for WooCommerce ${version}"
             echo
@@ -149,7 +160,7 @@ jobs:
             echo
             echo "**Install:** download \`agt-sync-for-woocommerce.${version}.zip\` below, then in your WordPress admin go to **Plugins → Add New → Upload Plugin**, choose the ZIP, and click **Install Now**. Requires WooCommerce and an American Gun Trader dealer account."
             echo
-            echo "**Also on WordPress.org:** https://wordpress.org/plugins/agt-sync-for-woocommerce/"
+            echo "$wp_org_line"
             echo
             echo "**Documentation & source:** https://github.com/shadow-software/agt-for-woocommerce#readme"
             echo

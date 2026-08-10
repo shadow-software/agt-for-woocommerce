@@ -39,3 +39,23 @@ Editable sources live in [`.github/assets/`](../.github/assets/):
 rsvg-convert -w 1544 -h 500 .github/assets/banner.svg -o .wordpress-org/banner-1544x500.png
 rsvg-convert -w  772 -h 250 .github/assets/banner.svg -o .wordpress-org/banner-772x250.png
 ```
+
+## Hotlinking these assets from AGT.com (or any external marketing page)
+
+This `.wordpress-org/` folder is tracked in the public GitHub repo, so its files
+are already reachable at a stable, immutable URL via `raw.githubusercontent.com`
+pinned to a release tag — no separate `marketing-assets` release needed:
+
+```
+https://raw.githubusercontent.com/shadow-software/agt-for-woocommerce/<tag>/.wordpress-org/<file>
+```
+
+For example, screenshot 1 at the `1.0.1` tag:
+
+```
+https://raw.githubusercontent.com/shadow-software/agt-for-woocommerce/1.0.1/.wordpress-org/screenshot-1.png
+```
+
+Pin to a tag (`1.0.1`), not `main`/`master` — a branch ref can change under a
+marketing page without notice; a tag never does. When a new release ships with
+updated screenshots, update the pinned tag in the marketing page's embed.

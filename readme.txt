@@ -203,8 +203,8 @@ American Gun Trader.
 
 **Terms and privacy**
 
-* American Gun Trader Terms: https://americanguntrader.com/terms
-* American Gun Trader Privacy Policy: https://americanguntrader.com/privacy
+* American Gun Trader Terms: https://americanguntrader.com/terms-of-service
+* American Gun Trader Privacy Policy: https://americanguntrader.com/privacy-policy
 * Shadow Software Terms: https://shadowsoftware.com/terms
 * Shadow Software Privacy Policy: https://shadowsoftware.com/privacy
 

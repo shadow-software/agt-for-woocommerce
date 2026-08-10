@@ -45,8 +45,8 @@ The How-to admin screen also points reviewers at support@shadowsoftware.com.
    (later — ZIP upload works without them).
 2. **Confirm AGT marketing pages in a normal browser** (Cloudflare may 403 bots):
    - `/integrations/woocommerce`
-   - `/privacy`, `/terms`
-   - `/settings/connections` (must exist for connected dealers)
+   - `/privacy-policy`, `/terms-of-service`
+   - `/settings/ai-assistant` (must exist for connected dealers)
 
 Sandbox login verified 2026-08-02 (302 → `/dashboard`).
 
