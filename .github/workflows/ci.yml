@@ -86,23 +86,23 @@ jobs:
       - name: Unit tests — PHPUnit
         run: composer test
 
-  # PHP 8.1 syntax gate — minimum supported runtime.
-  php81-syntax:
-    name: PHP 8.1 syntax
+  # PHP 8.2 syntax gate — minimum supported runtime (matches Requires PHP).
+  php82-syntax:
+    name: PHP 8.2 syntax
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v7
-      - name: Set up PHP 8.1
+      - name: Set up PHP 8.2
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.1'
+          php-version: '8.2'
           coverage: none
       - name: php -l on every PHP file (excluding vendor)
         run: |
           find . -type f -name '*.php' -not -path './vendor/*' -print0 \
             | xargs -0 -n1 -P4 php -l > /dev/null
-          echo "All PHP files parse on PHP 8.1."
+          echo "All PHP files parse on PHP 8.2."
 
   # The official WordPress.org Plugin Check — the exact automated gate the
   # directory runs. Built into the release layout first (composer --no-dev +
