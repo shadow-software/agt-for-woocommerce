@@ -11,7 +11,7 @@
         }
     ],
     "require": {
-        "php": ">=8.1",
+        "php": ">=8.2",
         "shadow-software/agt-php-sdk": "^0.2"
     },
     "require-dev": {
@@ -20,8 +20,8 @@
         "phpcompatibility/phpcompatibility-wp": "^2.1",
         "dealerdirect/phpcodesniffer-composer-installer": "^1.1",
         "szepeviktor/phpstan-wordpress": "^2.0",
-        "phpstan/phpstan": "^2.1",
-        "php-stubs/woocommerce-stubs": "^9.0",
+        "phpstan/phpstan": "^2.2",
+        "php-stubs/woocommerce-stubs": "^11.0",
         "yoast/phpunit-polyfills": "^3.1",
         "brain/monkey": "^2.6"
     },

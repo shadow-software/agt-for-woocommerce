@@ -60,14 +60,14 @@
 	</rule>
 
 	<!-- Minimum supported versions (gates deprecations + back-compat). -->
-	<config name="minimum_wp_version" value="6.4"/>
+	<config name="minimum_wp_version" value="7.0"/>
 
 	<!--
 		PHP cross-version compatibility. testVersion is the SUPPORTED range, not
-		the dev host: the plugin header says "Requires PHP: 8.1", so we lint for
+		the dev host: the plugin header says "Requires PHP: 8.2", so we lint for
 		8.1 and up.
 	-->
-	<config name="testVersion" value="8.1-"/>
+	<config name="testVersion" value="8.2-"/>
 	<rule ref="PHPCompatibilityWP"/>
 
 	<!--
