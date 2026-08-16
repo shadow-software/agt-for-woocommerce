@@ -14,3 +14,7 @@ Thumbs.db
 /docs/REVIEWER-SANDBOX.local.md
 *.local.md
 
+
+# Agent tooling — canonical copy lives in shadow-agent-markdown, never this repo
+.claude/
+.agents/
