@@ -12,6 +12,7 @@ namespace AgtSync\Tests;
 use AgtSync\Sync\Mapper;
 use Brain\Monkey;
 use Brain\Monkey\Functions;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -46,11 +47,10 @@ final class MapperTest extends TestCase {
 	/**
 	 * A condition attribute maps onto an AGT condition id.
 	 *
-	 * @dataProvider condition_provider
-	 *
 	 * @param string $text     The attribute value.
 	 * @param int    $expected The AGT condition id.
 	 */
+	#[DataProvider('condition_provider')]
 	public function test_condition_from_text( string $text, int $expected ): void {
 		$this->assertSame( $expected, Mapper::condition_from_text( $text ) );
 	}

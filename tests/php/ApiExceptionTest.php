@@ -11,6 +11,7 @@ namespace AgtSync\Tests;
 
 use AgtSync\Api\ApiException;
 use Brain\Monkey;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -39,11 +40,10 @@ final class ApiExceptionTest extends TestCase {
 	 * A rate limit, a server fault and a transport failure are all transient, so
 	 * they are worth trying again.
 	 *
-	 * @dataProvider retryable_provider
-	 *
 	 * @param int  $status   The HTTP status.
 	 * @param bool $expected Whether it should be retried.
 	 */
+	#[DataProvider('retryable_provider')]
 	public function test_what_is_worth_retrying( int $status, bool $expected ): void {
 		$e = new ApiException( 'x', $status );
 

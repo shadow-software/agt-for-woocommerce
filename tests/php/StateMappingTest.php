@@ -12,6 +12,7 @@ namespace AgtSync\Tests;
 use AgtSync\Sync\LinkMap;
 use AgtSync\Sync\Pusher;
 use Brain\Monkey;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -40,11 +41,10 @@ final class StateMappingTest extends TestCase {
 	/**
 	 * Each server status maps to the state that drives the right behaviour.
 	 *
-	 * @dataProvider status_provider
-	 *
 	 * @param string $server_status The status word from the API.
 	 * @param string $expected      The internal LinkMap state.
 	 */
+	#[DataProvider('status_provider')]
 	public function test_status_maps_to_state( string $server_status, string $expected ): void {
 		$this->assertSame( $expected, Pusher::state_from_status( $server_status ) );
 	}

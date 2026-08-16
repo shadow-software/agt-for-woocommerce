@@ -11,6 +11,7 @@ namespace AgtSync\Tests;
 
 use AgtSync\Sync\LinkMap;
 use Brain\Monkey;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -85,10 +86,9 @@ final class SkipGuardTest extends TestCase {
 	 * forever, with no way for the merchant to force it back short of editing the
 	 * title to perturb the hash.
 	 *
-	 * @dataProvider inactive_states
-	 *
 	 * @param string $state A state whose listing is not up.
 	 */
+	#[DataProvider('inactive_states')]
 	public function test_a_listing_that_is_not_up_is_never_skipped( string $state ): void {
 		$this->assertTrue(
 			$this->isInactive( $state ),

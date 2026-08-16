@@ -12,6 +12,7 @@ namespace AgtSync\Tests;
 use AgtSync\Settings;
 use Brain\Monkey;
 use Brain\Monkey\Functions;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -110,13 +111,12 @@ final class SettingsTest extends TestCase {
 	 * ready_to_sync() requires enabled + a confirmed condition + a connection.
 	 * Missing any one of them means no sync — the safety interlock.
 	 *
-	 * @dataProvider ready_provider
-	 *
 	 * @param bool $enabled   The enabled flag.
 	 * @param bool $confirmed The condition-confirmed flag.
 	 * @param bool $connected Whether a refresh token is stored.
 	 * @param bool $expected  Whether the plugin should sync.
 	 */
+	#[DataProvider('ready_provider')]
 	public function test_ready_to_sync_interlock( bool $enabled, bool $confirmed, bool $connected, bool $expected ): void {
 		$this->options['agt_sync_settings'] = array(
 			'enabled'             => $enabled,
