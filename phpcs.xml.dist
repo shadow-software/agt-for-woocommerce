@@ -64,10 +64,10 @@
 
 	<!--
 		PHP cross-version compatibility. testVersion is the SUPPORTED range, not
-		the dev host: the plugin header says "Requires PHP: 8.2", so we lint for
+		the dev host: the plugin header says "Requires PHP: 8.5", so we lint for
 		8.1 and up.
 	-->
-	<config name="testVersion" value="8.2-"/>
+	<config name="testVersion" value="8.5-"/>
 	<rule ref="PHPCompatibilityWP"/>
 
 	<!--

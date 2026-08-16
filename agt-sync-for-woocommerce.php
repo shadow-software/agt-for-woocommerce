@@ -5,7 +5,7 @@
  * Description:       Publish your WooCommerce products as listings on American Gun Trader, and keep them in step. When a gun sells on AGT, the WooCommerce product is set out of stock automatically — so you never sell the same firearm twice. Free and open source; requires an American Gun Trader dealer account.
  * Version:           1.0.1
  * Requires at least: 7.0
- * Requires PHP:      8.2
+ * Requires PHP:      8.5
  * Requires Plugins:  woocommerce
  * Author:            Shadow Software LLC
  * Author URI:        https://shadowsoftware.com/
