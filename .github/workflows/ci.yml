@@ -86,18 +86,9 @@ jobs:
       - name: Unit tests — PHPUnit
         run: composer test
 
-  # PHP 8.5 syntax gate — minimum supported runtime (matches Requires PHP).
-  php85-syntax:
-    name: PHP 8.5 syntax
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-      - name: Set up PHP 8.5
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.5'
-          coverage: none
+      # PHP 8.5 syntax gate — minimum supported runtime (matches Requires PHP).
+      # Folded into this job (rather than a standalone php85-syntax job) so
+      # checkout/dependency-install isn't paid for twice on a separate runner.
       - name: php -l on every PHP file (excluding vendor)
         run: |
           find . -type f -name '*.php' -not -path './vendor/*' -print0 \
