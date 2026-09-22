@@ -132,8 +132,10 @@ jobs:
           test -f "$dest/vendor/autoload.php"
           echo "PLUGIN_DIR=$dest" >> "$GITHUB_ENV"
 
+      # Pin to main until a release merges repo .wp-env.json (v1.1.9 still
+      # overwrites it and boots PHP 8.3 — our plugin requires 8.5).
       - name: Run Plugin Check
-        uses: wordpress/plugin-check-action@v1.1.9
+        uses: wordpress/plugin-check-action@005058d6
         with:
           build-dir: ${{ env.PLUGIN_DIR }}
           slug: agt-sync-for-woocommerce
