@@ -54,6 +54,8 @@ jobs:
 
       - name: Write SSH key
         run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
           install -m 600 /dev/null ~/.ssh/smoke_key
           printf '%s\n' "${{ secrets.SMOKE_SSH_KEY }}" > ~/.ssh/smoke_key
           echo "SMOKE_SSH_KEY=$HOME/.ssh/smoke_key" >> "$GITHUB_ENV"
