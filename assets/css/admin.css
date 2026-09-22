@@ -68,6 +68,10 @@
 	text-align: left;
 }
 
+.agt-sync-behaviour + h2 {
+	margin-top: 1.5em;
+}
+
 /* The product meta box. */
 .agt-sync-status {
 	margin: 8px 0;
