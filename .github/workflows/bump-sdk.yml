@@ -30,6 +30,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 concurrency:
   group: bump-sdk
@@ -81,13 +82,32 @@ jobs:
         if: steps.sdk.outputs.skip != 'true'
         env:
           GH_TOKEN: ${{ secrets.SDK_RELEASE_TOKEN }}
+          SDK_VERSION: ${{ steps.sdk.outputs.version }}
         run: |
           set -euo pipefail
           if [ -n "$GH_TOKEN" ]; then
             composer config --global github-oauth.github.com "$GH_TOKEN"
           fi
-          minor="$(echo "${{ steps.sdk.outputs.version }}" | cut -d. -f1,2)"
-          composer require "shadow-software/agt-php-sdk:^${minor}" --no-interaction --with-all-dependencies
+          IFS='.' read -r major minor _patch <<< "$SDK_VERSION"
+          if [ "$major" = "0" ]; then
+            constraint="^${major}.${minor}"
+          else
+            constraint="^${major}.0"
+          fi
+          composer require "shadow-software/agt-php-sdk:${constraint}" --no-update --no-interaction
+          locked_version=""
+          for attempt in 1 2 3 4 5; do
+            composer update shadow-software/agt-php-sdk --no-interaction --no-progress --with-all-dependencies
+            locked_version="$(jq -r '.packages[] | select(.name=="shadow-software/agt-php-sdk") | .version' composer.lock)"
+            if [ "$locked_version" = "$SDK_VERSION" ]; then
+              break
+            fi
+            echo "Attempt ${attempt}: composer resolved ${locked_version:-<none>}, waiting for Packagist to index ${SDK_VERSION}..."
+            sleep 15
+          done
+          if [ "$locked_version" != "$SDK_VERSION" ]; then
+            echo "::warning::Composer never resolved exactly ${SDK_VERSION} (got '${locked_version:-<none>}') after 5 attempts."
+          fi
 
       # Diffs the actually-resolved package version rather than the raw
       # composer.lock/composer.json bytes: composer.lock's content-hash
@@ -127,5 +147,21 @@ jobs:
           git add composer.json composer.lock agt-sync-for-woocommerce.php readme.txt
           git commit -m "chore: bump agt-php-sdk to ${{ steps.sdk.outputs.version }}, release ${{ steps.bump.outputs.version }}"
           git tag "${{ steps.bump.outputs.version }}"
-          git push origin master
-          git push origin "${{ steps.bump.outputs.version }}"
+          git push origin HEAD "${{ steps.bump.outputs.version }}"
+
+      - name: Trigger the release workflow
+        if: steps.diff.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NEW_VERSION: ${{ steps.bump.outputs.version }}
+        run: |
+          set -uo pipefail
+          for attempt in 1 2 3; do
+            if gh workflow run release.yml --ref "${NEW_VERSION}" -f tag="${NEW_VERSION}"; then
+              echo "Triggered release.yml for ${NEW_VERSION}."
+              exit 0
+            fi
+            echo "Attempt ${attempt}: release.yml dispatch failed, retrying..."
+            sleep 5
+          done
+          echo "::warning::Could not trigger release.yml for ${NEW_VERSION} after 3 attempts. Re-run release.yml manually with workflow_dispatch."

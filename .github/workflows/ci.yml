@@ -141,3 +141,4 @@ jobs:
           include-experimental: true
           include-low-severity-errors: true
           include-low-severity-warnings: true
+          strict: true
