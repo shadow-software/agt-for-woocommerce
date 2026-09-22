@@ -4,8 +4,9 @@ name: Live smoke
 # smoke against the official AGT sandbox dealer connected on the digest site.
 #
 # Secrets: SMOKE_SSH_HOST, SMOKE_SSH_KEY, SMOKE_WP_PATH, SMOKE_SITE_URL,
-#           SMOKE_WP_USER, SMOKE_WP_APP_PASSWORD, AGT_SANDBOX_EMAIL,
-#           SDK_RELEASE_TOKEN or COMPOSER_AUTH
+#           SMOKE_WP_USER, SMOKE_WP_APP_PASSWORD, SDK_RELEASE_TOKEN or
+#           COMPOSER_AUTH. The remote WordPress site holds the OAuth connection
+#           to the official AGT sandbox identity.
 on:
   workflow_dispatch:
   push:
