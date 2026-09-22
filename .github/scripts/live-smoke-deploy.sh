@@ -44,7 +44,7 @@ trap rollback ERR
 mkdir -p "\$ROLLBACK"
 if [[ -d "\$PLUGIN_DIR" ]]; then
 	cp -a "\$PLUGIN_DIR" "\$BACKUP"
-	echo "Backed up to \$BACKUP"
+	echo "Backed up to \$BACKUP" >&2
 fi
 
 STAGE="\${REMOTE_ZIP%.zip}-stage"

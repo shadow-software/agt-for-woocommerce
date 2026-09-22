@@ -37,8 +37,28 @@ echo "AGT base: {$base}\n";
 
 $client = new Client();
 
+/**
+ * Retry on plugin local rate-limit (429) only.
+ *
+ * @param callable():mixed $fn
+ */
+$retry = static function ( callable $fn ) {
+	for ( $i = 0; $i < 5; $i++ ) {
+		try {
+			return $fn();
+		} catch ( ApiException $e ) {
+			if ( 429 !== $e->status() || $i >= 4 ) {
+				throw $e;
+			}
+			sleep( 15 * ( $i + 1 ) );
+		}
+	}
+
+	throw new \RuntimeException( 'unreachable' );
+};
+
 try {
-	$me   = $client->get( '/me' );
+	$me   = $retry( static fn () => $client->get( '/me' ) );
 	$data = $me['data'] ?? array();
 	if ( empty( $data['ffl_verified'] ) ) {
 		$fail( 'dealer is not FFL verified' );
@@ -55,7 +75,7 @@ try {
 }
 
 try {
-	$tax        = $client->get( '/taxonomy' );
+	$tax        = $retry( static fn () => $client->get( '/taxonomy' ) );
 	$categories = $tax['data']['categories'] ?? array();
 	if ( empty( $categories ) ) {
 		$fail( 'taxonomy returned no categories' );
