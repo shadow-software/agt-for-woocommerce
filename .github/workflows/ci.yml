@@ -133,7 +133,7 @@ jobs:
           echo "PLUGIN_DIR=$dest" >> "$GITHUB_ENV"
 
       - name: Run Plugin Check
-        uses: wordpress/plugin-check-action@v1
+        uses: wordpress/plugin-check-action@v1.1.9
         with:
           build-dir: ${{ env.PLUGIN_DIR }}
           slug: agt-sync-for-woocommerce
