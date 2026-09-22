@@ -2,8 +2,8 @@
 /**
  * Plugin Name:       AGT Sync for WooCommerce
  * Plugin URI:        https://github.com/shadow-software/agt-for-woocommerce
- * Description:       Publish your WooCommerce products as listings on American Gun Trader, and keep them in step. When a gun sells on AGT, the WooCommerce product is set out of stock automatically — so you never sell the same firearm twice. Free and open source; requires an American Gun Trader dealer account.
- * Version:           1.0.2
+ * Description:       Sync WooCommerce products to an external marketplace and keep them in step. When an item sells on the platform, the WooCommerce product is set out of stock automatically — so you never sell the same product twice. Free and open source; requires an American Gun Trader seller account.
+ * Version:           1.0.3
  * Requires at least: 7.0
  * Requires PHP:      8.5
  * Requires Plugins:  woocommerce
@@ -24,7 +24,7 @@ defined( 'ABSPATH' ) || exit;
 
 // Keep in lockstep with the "Version:" header above and readme.txt's
 // "Stable tag:" + changelog.
-define( 'AGT_SYNC_VERSION', '1.0.2' );
+define( 'AGT_SYNC_VERSION', '1.0.3' );
 define( 'AGT_SYNC_FILE', __FILE__ );
 define( 'AGT_SYNC_PATH', plugin_dir_path( __FILE__ ) );
 define( 'AGT_SYNC_URL', plugin_dir_url( __FILE__ ) );
