@@ -2,8 +2,8 @@
 /**
  * Thin live smoke for AGT Sync — runs inside WordPress via `wp eval-file`.
  *
- * Uses the store's saved OAuth credentials (palerider / info@shadowsoftware.com
- * smoke dealer until dedicated accounts ship). Read-only: /me + /taxonomy.
+ * Uses the store's saved OAuth credentials for the official AGT sandbox.
+ * Read-only: /me + /taxonomy.
  *
  * @package AgtSync
  */

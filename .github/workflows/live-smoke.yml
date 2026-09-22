@@ -1,10 +1,11 @@
 name: Live smoke
 
 # Deploy release layout to marksmansdigest.com over SSH, run REST + wp eval-file
-# smoke against production AGT (temporary smoke dealer OAuth on the digest site).
+# smoke against the official AGT sandbox dealer connected on the digest site.
 #
 # Secrets: SMOKE_SSH_HOST, SMOKE_SSH_KEY, SMOKE_WP_PATH, SMOKE_SITE_URL,
-#           SMOKE_WP_USER, SMOKE_WP_APP_PASSWORD, SDK_RELEASE_TOKEN or COMPOSER_AUTH
+#           SMOKE_WP_USER, SMOKE_WP_APP_PASSWORD, AGT_SANDBOX_EMAIL,
+#           SDK_RELEASE_TOKEN or COMPOSER_AUTH
 on:
   workflow_dispatch:
   push:
