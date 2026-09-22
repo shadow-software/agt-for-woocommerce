@@ -5,7 +5,7 @@ Tags: woocommerce, firearms, ffl, inventory-sync, marketplace
 Requires at least: 7.0
 Tested up to: 7.1
 Requires PHP: 8.5
-Stable tag: 1.0.1
+Stable tag: 1.0.2
 WC requires at least: 8.2
 WC tested up to: 11.0
 License: GPLv2 or later
@@ -29,7 +29,7 @@ public on [GitHub](https://github.com/shadow-software/agt-for-woocommerce).
 = You need an American Gun Trader dealer account =
 
 This plugin is for licensed dealers. To use it you need a free American Gun Trader
-account with an **approved FFL** and an **active dealer subscription**. The plugin
+account with an **approved FFL** and a **complete dealer profile**. The plugin
 will tell you plainly if your account is not ready, and link you to the page that
 fixes it.
 
@@ -113,7 +113,7 @@ your site's cron is working normally.
 
 = Do I need an American Gun Trader account? =
 
-Yes — a free account with an approved FFL and an active dealer subscription. The
+Yes — a free account with an approved FFL and a complete dealer profile. The
 plugin is for licensed dealers listing their inventory.
 
 = Does my WooCommerce password or my AGT password get stored anywhere? =
@@ -141,8 +141,7 @@ customer, order, or payment data ever leaves your store.
 
 = Will editing a price take my listing down for review? =
 
-No. Approved dealers with an active subscription publish without a review queue,
-and edits stay live.
+No. Approved dealers publish without a review queue, and edits stay live.
 
 = Why will one of my products not publish? =
 
@@ -240,6 +239,12 @@ The only data that leaves your store is the product information described under
 
 == Changelog ==
 
+= 1.0.2 =
+* Strip OpenAPI SDK dev artifacts from release ZIPs; enforce vendor prune in CI
+  Plugin Check and deploy builds.
+* Readme and admin copy: "dealer subscription" → "complete dealer profile" (no
+  pay-language in public docs).
+
 = 1.0.1 =
 * Host allowlist for AGT API / OAuth (`americanguntrader.com`; local hosts only
   under WP_DEBUG).
@@ -256,6 +261,9 @@ The only data that leaves your store is the product information described under
   when the firearm sells on American Gun Trader.
 
 == Upgrade Notice ==
+
+= 1.0.2 =
+Packaging and readme copy polish only — no database or sync behaviour changes.
 
 = 1.0.1 =
 Host allowlist, richer External services docs, and WP.org packaging fixes.

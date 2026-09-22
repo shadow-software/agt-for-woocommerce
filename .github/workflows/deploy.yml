@@ -69,6 +69,10 @@ jobs:
           fi
           composer install --no-dev --prefer-dist --no-progress --no-interaction
 
+      - name: Prune vendor dev artifacts before SVN deploy
+        if: steps.guard.outputs.ready == 'true'
+        run: bash .github/prune-vendor-dev.sh "$GITHUB_WORKSPACE"
+
       - name: Deploy plugin + assets to WordPress.org
         id: deploy
         if: steps.guard.outputs.ready == 'true'

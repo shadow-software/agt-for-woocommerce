@@ -71,8 +71,8 @@ one sells in WooCommerce, its AGT listing comes down.
 ## Requirements
 
 - WordPress 6.4+, WooCommerce 8.2+, PHP 8.1+
-- An American Gun Trader account with an **approved FFL** and an **active dealer
-  subscription**
+- An American Gun Trader account with an **approved FFL** and a **complete dealer
+  profile**
 - A complete address on that account, with a city chosen from the dropdown —
   listings take their location from your account, not from the product
 

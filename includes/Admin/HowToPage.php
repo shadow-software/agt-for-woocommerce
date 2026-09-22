@@ -40,7 +40,7 @@ final class HowToPage {
 		echo '<ul class="agt-sync-list">';
 		echo '<li>' . esc_html__( 'A free American Gun Trader account.', 'agt-sync-for-woocommerce' ) . '</li>';
 		echo '<li>' . esc_html__( 'An approved FFL on that account.', 'agt-sync-for-woocommerce' ) . '</li>';
-		echo '<li>' . esc_html__( 'An active dealer subscription.', 'agt-sync-for-woocommerce' ) . '</li>';
+		echo '<li>' . esc_html__( 'A complete dealer profile on that account.', 'agt-sync-for-woocommerce' ) . '</li>';
 		echo '<li>' . esc_html__( 'A complete address on that account, with a city chosen from the dropdown — listings take their location from your account, not from the product.', 'agt-sync-for-woocommerce' ) . '</li>';
 		echo '</ul>';
 

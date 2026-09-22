@@ -128,6 +128,7 @@ jobs:
           mkdir -p "$dest"
           # Copy runtime tree; honour .distignore by rsync exclude-from.
           rsync -a --exclude-from=.distignore ./ "$dest/"
+          bash .github/prune-vendor-dev.sh "$dest"
           # Ensure vendor landed (runtime SDK).
           test -f "$dest/vendor/autoload.php"
           echo "PLUGIN_DIR=$dest" >> "$GITHUB_ENV"

@@ -96,6 +96,7 @@ jobs:
 
           mkdir -p "$staging" dist
           rsync -a --exclude-from=.distignore ./ "$staging/"
+          bash .github/prune-vendor-dev.sh "$staging"
           test -f "$staging/vendor/autoload.php"
           test -f "$staging/agt-sync-for-woocommerce.php"
 
@@ -127,6 +128,10 @@ jobs:
 
           unzip -l "$zip" | grep -q 'agt-sync-for-woocommerce/composer.json' \
             || { echo "::error::composer.json missing — required alongside vendor/"; exit 1; }
+          if unzip -l "$zip" | grep -q 'git_push.sh'; then
+            echo "::error::git_push.sh leaked into ZIP — wp.org will reject the upload"
+            exit 1
+          fi
 
           echo "ZIP is lean and installable."
       - name: Extract release notes from the changelog

@@ -366,7 +366,7 @@ final class SettingsPage {
 
 		if ( ! $connected ) {
 			echo '<h2>' . esc_html__( 'Connect your store', 'agt-sync-for-woocommerce' ) . '</h2>';
-			echo '<p>' . esc_html__( 'AGT Sync publishes your products to American Gun Trader. You need a free American Gun Trader account with an approved FFL and an active dealer subscription.', 'agt-sync-for-woocommerce' ) . '</p>';
+			echo '<p>' . esc_html__( 'AGT Sync publishes your products to American Gun Trader. You need a free American Gun Trader account with an approved FFL and a complete dealer profile.', 'agt-sync-for-woocommerce' ) . '</p>';
 			echo '<p>' . esc_html__( 'There is nothing to copy and paste. Click Connect, approve it on American Gun Trader, and you are done.', 'agt-sync-for-woocommerce' ) . '</p>';
 
 			echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';

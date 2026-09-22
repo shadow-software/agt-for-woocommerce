@@ -65,7 +65,7 @@ msgid "An approved FFL on that account."
 msgstr ""
 
 #: includes/Admin/HowToPage.php:43
-msgid "An active dealer subscription."
+msgid "A complete dealer profile on that account."
 msgstr ""
 
 #: includes/Admin/HowToPage.php:44
@@ -371,7 +371,7 @@ msgid "Connect your store"
 msgstr ""
 
 #: includes/Admin/SettingsPage.php:369
-msgid "AGT Sync publishes your products to American Gun Trader. You need a free American Gun Trader account with an approved FFL and an active dealer subscription."
+msgid "AGT Sync publishes your products to American Gun Trader. You need a free American Gun Trader account with an approved FFL and a complete dealer profile."
 msgstr ""
 
 #: includes/Admin/SettingsPage.php:370
