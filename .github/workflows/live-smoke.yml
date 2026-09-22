@@ -1,0 +1,104 @@
+name: Live smoke
+
+# Deploy release layout to marksmansdigest.com over SSH, run REST + wp eval-file
+# smoke against production AGT (temporary smoke dealer OAuth on the digest site).
+#
+# Secrets: SMOKE_SSH_HOST, SMOKE_SSH_KEY, SMOKE_WP_PATH, SMOKE_SITE_URL,
+#           SMOKE_WP_USER, SMOKE_WP_APP_PASSWORD, SDK_RELEASE_TOKEN or COMPOSER_AUTH
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'
+      - '[0-9]+.[0-9]+.[0-9]+-*'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: live-smoke-agt-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  live-smoke:
+    name: marksmansdigest.com smoke
+    runs-on: ubuntu-latest
+    if: >-
+      github.event_name == 'workflow_dispatch'
+      || startsWith(github.ref, 'refs/tags/')
+    env:
+      SMOKE_PLUGIN_SLUG: agt-sync-for-woocommerce
+      SMOKE_WP_PATH: ${{ secrets.SMOKE_WP_PATH }}
+      SMOKE_SSH_HOST: ${{ secrets.SMOKE_SSH_HOST }}
+      SMOKE_SITE_URL: ${{ secrets.SMOKE_SITE_URL }}
+      SMOKE_WP_USER: ${{ secrets.SMOKE_WP_USER }}
+      SMOKE_WP_APP_PASSWORD: ${{ secrets.SMOKE_WP_APP_PASSWORD }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Guard — smoke secrets present
+        env:
+          SMOKE_SSH_KEY: ${{ secrets.SMOKE_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          missing=0
+          for v in SMOKE_SSH_HOST SMOKE_SSH_KEY SMOKE_WP_PATH SMOKE_SITE_URL; do
+            if [ -z "${!v:-}" ]; then
+              echo "::error::Missing $v"
+              missing=1
+            fi
+          done
+          [ "$missing" -eq 0 ]
+
+      - name: Write SSH key
+        run: |
+          install -m 600 /dev/null ~/.ssh/smoke_key
+          printf '%s\n' "${{ secrets.SMOKE_SSH_KEY }}" > ~/.ssh/smoke_key
+          echo "SMOKE_SSH_KEY=$HOME/.ssh/smoke_key" >> "$GITHUB_ENV"
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          tools: composer:v2
+
+      - name: Install runtime dependencies
+        env:
+          GH_TOKEN: ${{ secrets.SDK_RELEASE_TOKEN }}
+          COMPOSER_AUTH: ${{ secrets.COMPOSER_AUTH }}
+        run: |
+          if [ -n "$GH_TOKEN" ]; then
+            composer config --global github-oauth.github.com "$GH_TOKEN"
+          elif [ -n "$COMPOSER_AUTH" ]; then
+            echo "$COMPOSER_AUTH" > "$HOME/.composer/auth.json"
+          fi
+          composer install --no-dev --prefer-dist --no-progress --no-interaction
+
+      - name: Build release ZIP
+        id: build
+        run: |
+          set -euo pipefail
+          slug=agt-sync-for-woocommerce
+          staging="$(bash .github/scripts/build-release-layout.sh)"
+          zip="dist/${slug}.smoke.zip"
+          mkdir -p dist
+          ( cd "$(dirname "$staging")" && zip -r "$GITHUB_WORKSPACE/$zip" "$(basename "$staging")" )
+          echo "zip=$zip" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy to marksmansdigest.com
+        id: deploy
+        env:
+          SMOKE_ZIP_FILE: ${{ steps.build.outputs.zip }}
+        run: bash .github/scripts/live-smoke-deploy.sh
+
+      - name: REST smoke
+        run: bash tests/live-smoke/rest-smoke.sh
+
+      - name: Remote eval-file smoke
+        run: bash tests/live-smoke/remote-smoke.sh tests/live-smoke/run-smoke.php
+
+      - name: Roll back plugin on failure
+        if: failure() && steps.deploy.outcome == 'success'
+        run: bash .github/scripts/live-smoke-rollback.sh
