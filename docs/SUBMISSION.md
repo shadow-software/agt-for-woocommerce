@@ -34,8 +34,8 @@ Paste this into the WordPress.org submission / review private testing notes
 | | |
 |--|--|
 | Site | https://americanguntrader.com/ |
-| Email | `raywinkelman@gmail.com` |
-| Password | *(in `docs/REVIEWER-SANDBOX.local.md` — gitignored; copy from there when submitting)* |
+| Email | `agt-sandbox@shadowsoftware.com` |
+| Password | *(in `000-creds/.env.plugin-sandboxes` — copy when submitting)* |
 
 The How-to admin screen also points reviewers at support@shadowsoftware.com.
 
@@ -56,5 +56,5 @@ Sandbox login verified 2026-08-02 (302 → `/dashboard`).
 2. Confirm Plugin Check job is green on that commit.
 3. With SVN secrets set, the tag push deploys to
    `plugins.svn.wordpress.org/agt-sync-for-woocommerce`.
-4. Include the sandbox credentials from `docs/REVIEWER-SANDBOX.local.md` in the
+4. Include the sandbox credentials from `000-creds/.env.plugin-sandboxes` in the
    private review notes.
