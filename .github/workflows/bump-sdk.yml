@@ -165,3 +165,22 @@ jobs:
             sleep 5
           done
           echo "::warning::Could not trigger release.yml for ${NEW_VERSION} after 3 attempts. Re-run release.yml manually with workflow_dispatch."
+
+      # GITHUB_TOKEN tag pushes do not trigger deploy.yml either — dispatch it
+      # explicitly. deploy.yml no-ops when SVN secrets are unset.
+      - name: Trigger the WordPress.org deploy workflow
+        if: steps.diff.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NEW_VERSION: ${{ steps.bump.outputs.version }}
+        run: |
+          set -uo pipefail
+          for attempt in 1 2 3; do
+            if gh workflow run deploy.yml --ref "${NEW_VERSION}"; then
+              echo "Triggered deploy.yml for ${NEW_VERSION}."
+              exit 0
+            fi
+            echo "Attempt ${attempt}: deploy.yml dispatch failed, retrying..."
+            sleep 5
+          done
+          echo "::warning::Could not trigger deploy.yml for ${NEW_VERSION} after 3 attempts. Re-run deploy.yml manually with workflow_dispatch."
