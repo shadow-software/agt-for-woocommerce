@@ -75,6 +75,10 @@ The plugin is developed in the open. Its full documentation — the setup guide,
 field mapping, how the sync behaves, and the privacy and security model — is the
 project README on GitHub, kept alongside the source it describes.
 
+* Platform: https://americanguntrader.com/
+* Dealer API docs: https://americanguntrader.com/docs/dealer-api
+* TypeScript SDK: https://www.npmjs.com/package/@shadow-software/agt-sdk
+* Plugin page: https://americanguntrader.com/integrations/woocommerce
 * Documentation: https://github.com/shadow-software/agt-for-woocommerce#readme
 * Source code and releases: https://github.com/shadow-software/agt-for-woocommerce
 * Report a bug or request a feature: https://github.com/shadow-software/agt-for-woocommerce/issues

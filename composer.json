@@ -3,7 +3,7 @@
     "description": "Publish WooCommerce products as American Gun Trader listings and keep them in step \u2014 when a gun sells on AGT, the WooCommerce product goes out of stock. By Shadow Software.",
     "type": "wordpress-plugin",
     "license": "GPL-2.0-or-later",
-    "homepage": "https://shadowsoftware.com/",
+    "homepage": "https://americanguntrader.com/integrations/woocommerce",
     "authors": [
         {
             "name": "Shadow Software LLC",
