@@ -89,13 +89,12 @@ final class OAuthClient {
 
 		$pkce = Pkce::begin();
 
-		// Do not pre-encode redirect_uri — add_query_arg() already encodes values.
-		// Double-encoding would break the RFC 6749 exact-match against the token
-		// exchange (which sends the plain URI).
-		return add_query_arg(
+		// redirect_uri contains its own query string (&agt_oauth=callback). WordPress
+		// add_query_arg() does not encode '&' inside values, which truncates the URI
+		// at authorize time and yields AGT 400 Invalid client_id or redirect_uri.
+		$base = add_query_arg(
 			array(
 				'client_id'             => Credentials::client_id(),
-				'redirect_uri'          => self::redirect_uri(),
 				'response_type'         => 'code',
 				'state'                 => $pkce['state'],
 				'code_challenge'        => $pkce['challenge'],
@@ -103,6 +102,8 @@ final class OAuthClient {
 			),
 			self::oauth_url( '/authorize' )
 		);
+
+		return $base . '&redirect_uri=' . rawurlencode( self::redirect_uri() );
 	}
 
 	/**
