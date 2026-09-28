@@ -101,6 +101,7 @@ final class Plugin {
 
 		// Sold here -> withdraw it there, so the same gun is not offered twice.
 		add_action( 'woocommerce_product_set_stock_status', array( $this, 'on_stock_status' ), 10, 2 );
+		add_action( 'agt_sync_product_sold_on_agt', array( $this, 'on_product_sold_on_agt' ), 10, 1 );
 	}
 
 	/**
@@ -216,6 +217,21 @@ final class Plugin {
 				Queue::push( $product_id );
 			}
 		}
+	}
+
+	/**
+	 * An AGT sale set the WooCommerce product out of stock. Keep the entitled
+	 * dealer's AGT inventory quantity at zero as well.
+	 *
+	 * @param mixed $product The product changed by the status poll.
+	 * @return void
+	 */
+	public function on_product_sold_on_agt( $product ): void {
+		if ( ! $product instanceof \WC_Product || ! Settings::ready_to_sync() ) {
+			return;
+		}
+
+		Queue::inventory( (int) $product->get_id() );
 	}
 
 	/**

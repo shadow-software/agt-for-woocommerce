@@ -160,4 +160,31 @@ final class CredentialsTest extends TestCase {
 		$this->assertFalse( Credentials::has_client() );
 		$this->assertFalse( Credentials::is_connected() );
 	}
+
+	/**
+	 * Inventory requires the platform entitlement, FFL gate, and explicit OAuth
+	 * scope. A cached account flag alone must never unlock a write path.
+	 */
+	public function test_inventory_entitlement_requires_ffl_and_scope(): void {
+		Credentials::save_tokens( 'access', 'refresh', 3600, 'profile:read listings:read listings:write' );
+		Credentials::save_account(
+			array(
+				'ffl_verified' => true,
+				'inventory'    => array( 'enabled' => true ),
+			)
+		);
+
+		$this->assertFalse( Credentials::has_inventory_entitlement() );
+
+		Credentials::save_tokens( 'access', 'refresh', 3600, 'profile:read listings:read listings:write listings:inventory' );
+		$this->assertTrue( Credentials::has_inventory_entitlement() );
+
+		Credentials::save_account(
+			array(
+				'ffl_verified' => false,
+				'inventory'    => array( 'enabled' => true ),
+			)
+		);
+		$this->assertFalse( Credentials::has_inventory_entitlement() );
+	}
 }

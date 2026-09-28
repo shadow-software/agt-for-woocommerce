@@ -228,6 +228,30 @@ final class Mapper {
 	}
 
 	/**
+	 * Map WooCommerce stock to AGT's absolute inventory quantity.
+	 *
+	 * WooCommerce's unmanaged stock has no meaningful count, so an available
+	 * product is represented as one unit and an unavailable product as zero. A
+	 * managed product keeps its actual non-negative quantity.
+	 *
+	 * @param \WC_Product $product The product.
+	 * @return int
+	 */
+	public static function inventory_quantity( \WC_Product $product ): int {
+		if ( 'outofstock' === (string) $product->get_stock_status() ) {
+			return 0;
+		}
+
+		if ( ! $product->managing_stock() ) {
+			return 1;
+		}
+
+		$quantity = $product->get_stock_quantity();
+
+		return is_numeric( $quantity ) ? max( 0, (int) $quantity ) : 0;
+	}
+
+	/**
 	 * The attachment ids to publish: the featured image first, then the gallery.
 	 *
 	 * @param \WC_Product $product The product.

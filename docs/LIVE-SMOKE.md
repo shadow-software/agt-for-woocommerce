@@ -8,7 +8,9 @@ Workflow: `.github/workflows/live-smoke.yml`
 Triggers: semver tags, `workflow_dispatch`.
 
 Requires OAuth Connect on the digest site (one-time). Smoke calls `/me` and
-`/taxonomy` only — no listing creates.
+`/taxonomy` only — no listing creates. Inventory write/read coverage remains a
+documented skip until the connected smoke dealer is provisioned with the AGT inventory
+entitlement and the `listings:inventory` OAuth scope.
 
 ## Local run
 

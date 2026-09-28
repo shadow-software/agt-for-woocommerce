@@ -65,6 +65,9 @@ one sells in WooCommerce, its AGT listing comes down.
   Restore it and the listing comes back.
 - ⚡ **Approved dealers publish instantly.** No review queue — so a price change
   stays live rather than pulling your listing down.
+- 📊 **Entitled FFL dealers can sync stock.** When AGT inventory is enabled for the
+  connected dealer, WooCommerce quantities and in/out-of-stock state are updated in
+  the background. Other accounts send no inventory fields.
 - 🐢 **It will not hammer your store.** Everything runs in the background, in small
   batches, at a rate you can turn down.
 
@@ -159,8 +162,9 @@ The plugin does not read your orders or your customers.
 
 What is sent: the product information for the listings you choose to publish
 (title, description, price, condition, weight, category, manufacturer, caliber,
-photos), plus your site's URL once at connection time so you can recognise and
-revoke this store later.
+photos), and, only for an entitled FFL connection, the WooCommerce stock quantity.
+Your site's URL is sent once at connection time so you can recognise and revoke this
+store later.
 
 What is received: the status of your own listings — live, pending, sold or removed
 — with their view and bid counts and public URLs.

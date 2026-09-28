@@ -97,6 +97,8 @@ final class Pusher {
 		$payload      = $mapped['payload'];
 		$payload_hash = Mapper::payload_hash( $payload );
 		$image_hash   = Mapper::image_hash( $product );
+		$inventory_on = Credentials::has_inventory_entitlement();
+		$inventory    = $inventory_on ? Mapper::inventory_quantity( $product ) : null;
 
 		$link       = LinkMap::get( $product_id );
 		$listing_id = is_array( $link ) && ! empty( $link['listing_id'] ) ? (string) $link['listing_id'] : '';
@@ -131,6 +133,7 @@ final class Pusher {
 			&& ! $inactive
 			&& (string) ( $link['payload_hash'] ?? '' ) === $payload_hash
 			&& (string) ( $link['image_hash'] ?? '' ) === $image_hash
+			&& ( ! $inventory_on || (int) ( $link['inventory_quantity'] ?? -1 ) === $inventory )
 		) {
 			return;
 		}
@@ -138,6 +141,7 @@ final class Pusher {
 		try {
 			if ( '' === $listing_id ) {
 				$this->create( $product, $product_id, $payload, $payload_hash, $image_hash );
+				$this->sync_inventory( $product_id, $inventory );
 
 				return;
 			}
@@ -156,7 +160,7 @@ final class Pusher {
 
 			$images_changed = is_array( $link ) && (string) ( $link['image_hash'] ?? '' ) !== $image_hash;
 
-			$this->update( $product, $product_id, $listing_id, $payload, $payload_hash, $image_hash, $images_changed );
+			$this->update( $product, $product_id, $listing_id, $payload, $payload_hash, $image_hash, $images_changed, $inventory );
 		} catch ( ApiException $e ) {
 			$this->record_failure( $product_id, $e );
 
@@ -209,10 +213,15 @@ final class Pusher {
 	 * @param string              $payload_hash   Hash of the payload.
 	 * @param string              $image_hash     Hash of the image set.
 	 * @param bool                $images_changed Whether to re-upload the images.
+	 * @param int|null            $inventory      The inventory quantity, when entitled.
 	 * @return void
 	 * @throws ApiException On failure.
 	 */
-	private function update( \WC_Product $product, int $product_id, string $listing_id, array $payload, string $payload_hash, string $image_hash, bool $images_changed ): void {
+	private function update( \WC_Product $product, int $product_id, string $listing_id, array $payload, string $payload_hash, string $image_hash, bool $images_changed, ?int $inventory = null ): void {
+		$payload = is_int( $inventory ) && Credentials::has_inventory_entitlement()
+			? array_merge( $payload, array( 'inventory' => array( 'quantity' => $inventory ) ) )
+			: $payload;
+
 		if ( $images_changed ) {
 			// Images can only go over multipart, and sending them means resending the
 			// fields alongside. PATCH cannot carry a multipart body through
@@ -230,7 +239,7 @@ final class Pusher {
 			$response = $this->client->patch( '/listings/' . rawurlencode( $listing_id ), $payload );
 		}
 
-		$this->record_success( $product_id, $response, $payload_hash, $image_hash );
+		$this->record_success( $product_id, $response, $payload_hash, $image_hash, is_int( $inventory ) ? $inventory : null );
 
 		Logger::info( sprintf( 'Updated product #%d on American Gun Trader.', $product_id ) );
 	}
@@ -325,6 +334,8 @@ final class Pusher {
 				is_array( $link ) ? (string) ( $link['image_hash'] ?? '' ) : ''
 			);
 
+			$this->sync_inventory( $product_id );
+
 			Logger::info( sprintf( 'Restored product #%d on American Gun Trader.', $product_id ) );
 		} catch ( ApiException $e ) {
 			// The listing is gone for good on AGT. Publish a new one.
@@ -409,30 +420,110 @@ final class Pusher {
 	}
 
 	/**
+	 * Sync one product's current stock quantity to an existing listing.
+	 *
+	 * This is deliberately a no-op for non-entitled dealers, so old connections
+	 * and ordinary FFL accounts retain the pre-inventory wire contract.
+	 *
+	 * @param int      $product_id WooCommerce product id.
+	 * @param int|null $quantity   Explicit quantity, or derive it from WooCommerce.
+	 * @param bool     $force      Send even when the link already records this quantity.
+	 * @return void
+	 * @throws ApiException On a retryable failure.
+	 */
+	public function sync_inventory( int $product_id, ?int $quantity = null, bool $force = false ): void {
+		if ( ! Credentials::has_inventory_entitlement() ) {
+			return;
+		}
+
+		$product = wc_get_product( $product_id );
+
+		if ( ! $product instanceof \WC_Product ) {
+			return;
+		}
+
+		$listing_id = LinkMap::listing_id( $product_id );
+
+		if ( '' === $listing_id ) {
+			return;
+		}
+
+		$quantity = null === $quantity ? Mapper::inventory_quantity( $product ) : max( 0, $quantity );
+		$link     = LinkMap::get( $product_id );
+
+		if ( ! $force && is_array( $link ) && (int) ( $link['inventory_quantity'] ?? -1 ) === $quantity ) {
+			return;
+		}
+
+		try {
+			$this->client->patch(
+				'/listings/' . rawurlencode( $listing_id ),
+				array( 'inventory' => array( 'quantity' => $quantity ) )
+			);
+
+			LinkMap::save(
+				$product_id,
+				array(
+					'inventory_quantity' => $quantity,
+					'last_error'         => null,
+					'last_pushed_at'     => current_time( 'mysql', true ),
+				)
+			);
+		} catch ( ApiException $e ) {
+			// A deleted listing has no inventory row to update; the normal status poll
+			// will reconcile its lifecycle and the next push can recreate/restore it.
+			if ( 404 === $e->status() || 409 === $e->status() ) {
+				return;
+			}
+
+			// Entitlements can change between the cached /me response and this
+			// request. Do not turn a paywall response into a product sync error.
+			if ( 403 === $e->status() ) {
+				Logger::warn( sprintf( 'Inventory sync skipped for product #%d because the AGT account is not entitled.', $product_id ) );
+
+				return;
+			}
+
+			$this->record_failure( $product_id, $e );
+
+			if ( $e->is_retryable() ) {
+				throw $e;
+			}
+		}
+	}
+
+	/**
 	 * Record a successful push.
 	 *
 	 * @param int                 $product_id   The product id.
 	 * @param array<string,mixed> $response     The API response.
 	 * @param string              $payload_hash Hash of what we sent.
 	 * @param string              $image_hash   Hash of the images we sent.
+	 * @param int|null            $inventory_quantity Quantity sent, when entitled.
 	 * @return void
 	 */
-	private function record_success( int $product_id, array $response, string $payload_hash, string $image_hash ): void {
+	private function record_success( int $product_id, array $response, string $payload_hash, string $image_hash, ?int $inventory_quantity = null ): void {
 		$listing = isset( $response['data'] ) && is_array( $response['data'] ) ? $response['data'] : array();
+
+		$data = array(
+			'listing_id'     => isset( $listing['id'] ) ? (string) $listing['id'] : null,
+			'payload_hash'   => $payload_hash,
+			'image_hash'     => $image_hash,
+			'state'          => self::state_from_status( isset( $listing['status'] ) ? (string) $listing['status'] : '' ),
+			'listing_url'    => isset( $listing['url'] ) ? (string) $listing['url'] : null,
+			'views'          => isset( $listing['views'] ) ? (int) $listing['views'] : 0,
+			'bid_count'      => isset( $listing['bid_count'] ) ? (int) $listing['bid_count'] : 0,
+			'last_error'     => null,
+			'last_pushed_at' => current_time( 'mysql', true ),
+		);
+
+		if ( null !== $inventory_quantity ) {
+			$data['inventory_quantity'] = $inventory_quantity;
+		}
 
 		LinkMap::save(
 			$product_id,
-			array(
-				'listing_id'     => isset( $listing['id'] ) ? (string) $listing['id'] : null,
-				'payload_hash'   => $payload_hash,
-				'image_hash'     => $image_hash,
-				'state'          => self::state_from_status( isset( $listing['status'] ) ? (string) $listing['status'] : '' ),
-				'listing_url'    => isset( $listing['url'] ) ? (string) $listing['url'] : null,
-				'views'          => isset( $listing['views'] ) ? (int) $listing['views'] : 0,
-				'bid_count'      => isset( $listing['bid_count'] ) ? (int) $listing['bid_count'] : 0,
-				'last_error'     => null,
-				'last_pushed_at' => current_time( 'mysql', true ),
-			)
+			$data
 		);
 	}
 

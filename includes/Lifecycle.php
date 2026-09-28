@@ -39,7 +39,7 @@ final class Lifecycle {
 	 * The DB schema version this build expects. Bump when LinkMap's schema changes
 	 * so the per-request heal re-runs dbDelta.
 	 */
-	private const DB_VERSION = '2';
+	private const DB_VERSION = '3';
 
 	/**
 	 * The option that records the installed schema version.

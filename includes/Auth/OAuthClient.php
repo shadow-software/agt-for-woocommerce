@@ -96,6 +96,7 @@ final class OAuthClient {
 			array(
 				'client_id'             => Credentials::client_id(),
 				'response_type'         => 'code',
+				'scope'                 => 'listings:read listings:write listings:inventory taxonomy:read profile:read',
 				'state'                 => $pkce['state'],
 				'code_challenge'        => $pkce['challenge'],
 				'code_challenge_method' => 'S256',

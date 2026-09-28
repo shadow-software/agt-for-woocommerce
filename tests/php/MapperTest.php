@@ -140,4 +140,31 @@ final class MapperTest extends TestCase {
 
 		$this->assertNotSame( $before, $after );
 	}
+
+	/**
+	 * Inventory is an absolute quantity for managed stock, and a binary quantity
+	 * for products WooCommerce keeps in stock without tracking units.
+	 */
+	public function test_inventory_quantity_maps_woocommerce_stock_safely(): void {
+		$managed = $this->createStub( \WC_Product::class );
+		$managed->method( 'managing_stock' )->willReturn( true );
+		$managed->method( 'get_stock_quantity' )->willReturn( 7 );
+		$managed->method( 'get_stock_status' )->willReturn( 'instock' );
+
+		$this->assertSame( 7, Mapper::inventory_quantity( $managed ) );
+
+		$empty_managed = $this->createStub( \WC_Product::class );
+		$empty_managed->method( 'managing_stock' )->willReturn( true );
+		$empty_managed->method( 'get_stock_quantity' )->willReturn( null );
+		$empty_managed->method( 'get_stock_status' )->willReturn( 'outofstock' );
+
+		$this->assertSame( 0, Mapper::inventory_quantity( $empty_managed ) );
+
+		$unmanaged = $this->createStub( \WC_Product::class );
+		$unmanaged->method( 'managing_stock' )->willReturn( false );
+		$unmanaged->method( 'get_stock_quantity' )->willReturn( null );
+		$unmanaged->method( 'get_stock_status' )->willReturn( 'instock' );
+
+		$this->assertSame( 1, Mapper::inventory_quantity( $unmanaged ) );
+	}
 }

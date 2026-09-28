@@ -9,6 +9,7 @@ namespace AgtSync\Sync;
 
 use AgtSync\Api\ApiException;
 use AgtSync\Api\Client;
+use AgtSync\Auth\Credentials;
 use AgtSync\Logger;
 use AgtSync\Settings;
 
@@ -115,6 +116,16 @@ final class Puller {
 			}
 
 			$this->apply( (int) $product_id, $statuses[ $listing_id ] );
+		}
+
+		// A scheduled status poll is also the catalogue's safety net for stock
+		// changes made by integrations that do not fire WooCommerce's save hooks.
+		if ( Credentials::has_inventory_entitlement() ) {
+			$pusher = new Pusher( $this->client );
+
+			foreach ( $tracked as $product_id ) {
+				$pusher->sync_inventory( (int) $product_id );
+			}
 		}
 	}
 

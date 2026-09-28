@@ -28,13 +28,14 @@ final class Queue {
 	/**
 	 * Hook names.
 	 */
-	public const HOOK_PUSH     = 'agt_sync_push_product';
-	public const HOOK_REMOVE   = 'agt_sync_remove_listing';
-	public const HOOK_RESTORE  = 'agt_sync_restore_listing';
-	public const HOOK_WITHDRAW = 'agt_sync_withdraw_listing';
-	public const HOOK_POLL     = 'agt_sync_poll_status';
-	public const HOOK_TAXONOMY = 'agt_sync_refresh_taxonomy';
-	public const HOOK_BACKFILL = 'agt_sync_backfill';
+	public const HOOK_PUSH      = 'agt_sync_push_product';
+	public const HOOK_REMOVE    = 'agt_sync_remove_listing';
+	public const HOOK_RESTORE   = 'agt_sync_restore_listing';
+	public const HOOK_WITHDRAW  = 'agt_sync_withdraw_listing';
+	public const HOOK_INVENTORY = 'agt_sync_inventory';
+	public const HOOK_POLL      = 'agt_sync_poll_status';
+	public const HOOK_TAXONOMY  = 'agt_sync_refresh_taxonomy';
+	public const HOOK_BACKFILL  = 'agt_sync_backfill';
 
 	/**
 	 * The Action Scheduler group, so a merchant can see our jobs apart from
@@ -65,6 +66,7 @@ final class Queue {
 		add_action( self::HOOK_REMOVE, array( $this, 'run_remove' ), 10, 2 );
 		add_action( self::HOOK_RESTORE, array( $this, 'run_restore' ), 10, 2 );
 		add_action( self::HOOK_WITHDRAW, array( $this, 'run_withdraw' ), 10, 2 );
+		add_action( self::HOOK_INVENTORY, array( $this, 'run_inventory' ), 10, 2 );
 		add_action( self::HOOK_POLL, array( $this, 'run_poll' ) );
 		add_action( self::HOOK_TAXONOMY, array( $this, 'run_taxonomy' ) );
 		add_action( self::HOOK_BACKFILL, array( $this, 'run_backfill' ), 10, 1 );
@@ -133,6 +135,7 @@ final class Queue {
 			self::HOOK_REMOVE,
 			self::HOOK_RESTORE,
 			self::HOOK_WITHDRAW,
+			self::HOOK_INVENTORY,
 			self::HOOK_POLL,
 			self::HOOK_TAXONOMY,
 			self::HOOK_BACKFILL,
@@ -189,6 +192,18 @@ final class Queue {
 	 */
 	public static function withdraw( int $product_id, int $attempt = 1, int $delay = 0 ): void {
 		self::enqueue( self::HOOK_WITHDRAW, $product_id, $attempt, $delay );
+	}
+
+	/**
+	 * Queue an inventory-only update, used after an AGT sale writeback.
+	 *
+	 * @param int $product_id WooCommerce product id.
+	 * @param int $attempt    Which attempt this is.
+	 * @param int $delay      Seconds to wait.
+	 * @return void
+	 */
+	public static function inventory( int $product_id, int $attempt = 1, int $delay = 0 ): void {
+		self::enqueue( self::HOOK_INVENTORY, $product_id, $attempt, $delay );
 	}
 
 	/**
@@ -273,6 +288,24 @@ final class Queue {
 			(int) $attempt,
 			static function ( int $id ): void {
 				( new Pusher() )->withdraw( $id );
+			}
+		);
+	}
+
+	/**
+	 * Sync one product's stock quantity.
+	 *
+	 * @param int $product_id WooCommerce product id.
+	 * @param int $attempt    Which attempt this is.
+	 * @return void
+	 */
+	public function run_inventory( $product_id, $attempt = 1 ): void {
+		$this->run(
+			self::HOOK_INVENTORY,
+			(int) $product_id,
+			(int) $attempt,
+			static function ( int $id ): void {
+				( new Pusher() )->sync_inventory( $id );
 			}
 		);
 	}

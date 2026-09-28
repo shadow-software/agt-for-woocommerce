@@ -110,6 +110,33 @@ final class Credentials {
 	}
 
 	/**
+	 * The scopes granted to the current OAuth token.
+	 *
+	 * @return array<int,string>
+	 */
+	public static function scopes(): array {
+		$tokens = get_option( self::TOKEN_OPTION, array() );
+
+		if ( ! is_array( $tokens ) || ! isset( $tokens['scope'] ) ) {
+			return array();
+		}
+
+		$scopes = preg_split( '/\s+/', trim( (string) $tokens['scope'] ) );
+
+		return array_values( array_filter( is_array( $scopes ) ? $scopes : array() ) );
+	}
+
+	/**
+	 * Whether the current token carries a named scope.
+	 *
+	 * @param string $scope Scope name.
+	 * @return bool
+	 */
+	public static function has_scope( string $scope ): bool {
+		return in_array( $scope, self::scopes(), true );
+	}
+
+	/**
 	 * The current access token, or ''.
 	 *
 	 * @return string
@@ -185,6 +212,24 @@ final class Credentials {
 		$account = self::account();
 
 		return ! empty( $account['can_publish'] );
+	}
+
+	/**
+	 * Whether /me grants this connected FFL the inventory feature.
+	 *
+	 * The account flag and the OAuth scope are both required. This keeps a stale
+	 * cached entitlement or an old pre-inventory connection from causing a write
+	 * to a paywalled API surface.
+	 *
+	 * @return bool
+	 */
+	public static function has_inventory_entitlement(): bool {
+		$account   = self::account();
+		$inventory = isset( $account['inventory'] ) && is_array( $account['inventory'] ) ? $account['inventory'] : array();
+
+		return ! empty( $account['ffl_verified'] )
+			&& ! empty( $inventory['enabled'] )
+			&& self::has_scope( 'listings:inventory' );
 	}
 
 	/**

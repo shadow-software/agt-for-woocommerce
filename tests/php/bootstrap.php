@@ -53,6 +53,8 @@ if ( ! class_exists( 'WC_Product' ) ) {
 		public function get_gallery_image_ids() {}
 		public function is_type( $type = '' ) {}
 		public function managing_stock() {}
+		public function get_stock_quantity() {}
+		public function get_stock_status() {}
 		public function set_stock_status( $status = '' ) {}
 		public function set_stock_quantity( $qty = 0 ) {}
 		public function save() {}

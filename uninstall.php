@@ -46,6 +46,7 @@ function agt_sync_uninstall_cleanup() {
 				'agt_sync_remove_listing',
 				'agt_sync_restore_listing',
 				'agt_sync_withdraw_listing',
+				'agt_sync_inventory',
 				'agt_sync_poll_status',
 				'agt_sync_refresh_taxonomy',
 				'agt_sync_backfill',

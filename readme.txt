@@ -5,7 +5,7 @@ Tags: woocommerce, inventory-sync, marketplace, multi-channel, oauth
 Requires at least: 7.0
 Tested up to: 7.1
 Requires PHP: 8.5
-Stable tag: 1.0.4
+Stable tag: 1.0.5
 WC requires at least: 8.2
 WC tested up to: 11.0
 License: GPLv2 or later
@@ -48,6 +48,10 @@ American Gun Trader password.
   periodically; when a catalog entry shows as sold, the product is marked out of stock
   and a note explaining why is added to it. This is what prevents the same item
   being sold on both channels.
+* **Syncs stock for entitled FFL accounts.** If American Gun Trader has enabled its
+  inventory feature for the connected dealer, managed quantities and in/out-of-stock
+  state are kept in step. Dealers without that entitlement continue with the normal
+  listing sync and send no inventory fields.
 * **Trash a product, the catalog entry goes.** Restore it from the trash and the entry
   comes back — deletion is reversible on both sides.
 * **Shows you what happened.** Every product tells you its sync status, its
@@ -199,8 +203,9 @@ American Gun Trader.
 * **When it is called:** when a synced product is created, updated, or deleted;
   on an hourly status pull; once a day for taxonomy refresh.
 * **What is sent:** product title, description, price, condition, weight,
-  category / manufacturer / attributes, and up to 10 photos. **No customer data,
-  no order data, no payment data.**
+  category / manufacturer / attributes, and up to 10 photos. Entitled FFL dealers
+  also send the WooCommerce stock quantity. **No customer data, no order data, no
+  payment data.**
 * **What is received:** sync status, view/bid counts, and public URL for
   your own catalog entries.
 
@@ -239,6 +244,10 @@ The only data that leaves your store is the product information described under
 
 == Changelog ==
 
+= 1.0.5 =
+* Sync WooCommerce stock quantity and availability to American Gun Trader for entitled
+  FFL dealers, including the AGT-sale writeback path.
+
 = 1.0.4 =
 * Exclude OpenAPI generator metadata from the WordPress.org distribution archive.
 
@@ -268,6 +277,10 @@ The only data that leaves your store is the product information described under
   when the item sells on American Gun Trader.
 
 == Upgrade Notice ==
+
+= 1.0.5 =
+Entitled FFL dealers can keep American Gun Trader inventory quantities and stock state
+aligned with WooCommerce. Other accounts continue to send no inventory fields.
 
 = 1.0.4 =
 Packaging-only update: removes SDK generator metadata rejected by WordPress.org.

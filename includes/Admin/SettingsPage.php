@@ -8,6 +8,7 @@
 namespace AgtSync\Admin;
 
 use AgtSync\Api\ApiException;
+use AgtSync\Api\Host;
 use AgtSync\Api\RateLimit;
 use AgtSync\Auth\Credentials;
 use AgtSync\Auth\OAuthClient;
@@ -428,6 +429,8 @@ final class SettingsPage {
 				. '</p>';
 		}
 
+		$this->render_inventory_status();
+
 		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
 		wp_nonce_field( 'agt_sync_disconnect' );
 		echo '<input type="hidden" name="action" value="agt_sync_disconnect">';
@@ -436,6 +439,30 @@ final class SettingsPage {
 		echo '</form>';
 
 		echo '</div>';
+	}
+
+	/**
+	 * Explain the optional inventory entitlement without exposing a control that
+	 * could bypass AGT's FFL and billing gates.
+	 *
+	 * @return void
+	 */
+	private function render_inventory_status(): void {
+		$billing_url = Host::api_base() . '/settings/billing';
+
+		if ( Credentials::has_inventory_entitlement() ) {
+			echo '<p class="agt-sync-good">'
+				. esc_html__( 'Inventory sync is enabled for this connected FFL account. WooCommerce stock quantities are sent to American Gun Trader.', 'agt-sync-for-woocommerce' )
+				. '</p>';
+
+			return;
+		}
+
+		echo '<div class="notice notice-info inline"><p>'
+			. esc_html__( 'Inventory sync is an optional American Gun Trader feature for entitled FFL accounts. Until it is enabled, this plugin sends no inventory quantities.', 'agt-sync-for-woocommerce' )
+			. ' <a href="' . esc_url( $billing_url ) . '" target="_blank" rel="noopener noreferrer">'
+			. esc_html__( 'Review AGT billing', 'agt-sync-for-woocommerce' )
+			. '</a></p></div>';
 	}
 
 	/**

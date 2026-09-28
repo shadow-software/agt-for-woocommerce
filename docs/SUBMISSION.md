@@ -13,7 +13,7 @@ separate project.
 ## Ready
 
 - [x] Plugin code (phases 0–7), PHPCS / PHPStan / PHPUnit green locally
-- [x] `readme.txt` (External services, Privacy, FAQ, changelog through 1.0.4)
+- [x] `readme.txt` (External services, Privacy, FAQ, changelog through 1.0.5)
 - [x] `README.md`, `SECURITY.md`, `CONTRIBUTING.md`, `LICENSE`
 - [x] Directory icons + banners + screenshots 1–4 in `.wordpress-org/`
 - [x] Family GitHub README (OG logo, About Shadow Software, Also by)
@@ -48,8 +48,9 @@ The How-to admin screen also points reviewers at support@shadowsoftware.com.
 
 ## Still blocking submission
 
-1. **SVN credentials** — set `SVN_USERNAME` / `SVN_PASSWORD` on the GitHub repo
-   (later — ZIP upload works without them).
+1. **SVN access** — the laptop publisher uses `000-creds/.env.wordpress.org`
+   (or `SVN_USERNAME` / `SVN_PASSWORD`); the GitHub workflow remains available
+   but is not the laptop release path.
 2. **Confirm AGT marketing pages in a normal browser** (Cloudflare may 403 bots):
    - `/integrations/woocommerce`
    - `/privacy-policy`, `/terms-of-service`
@@ -59,9 +60,17 @@ Sandbox login verified 2026-08-02 (302 → `/dashboard`).
 
 ## How to submit
 
-1. Tag matching the current `Stable tag` / header / `AGT_SYNC_VERSION` (`1.0.4`).
+1. Tag matching the current `Stable tag` / header / `AGT_SYNC_VERSION` (`1.0.5`).
 2. Run the local release-layout Plugin Check gate and confirm it is green.
 3. With SVN secrets set, the tag push deploys to
    `plugins.svn.wordpress.org/agt-sync-for-woocommerce`.
 4. Include the sandbox credentials from `000-creds/.env.plugin-sandboxes` in the
    private review notes.
+
+The laptop SVN publisher is available for the first approved release and later
+updates:
+
+```bash
+DRY_RUN=1 bash scripts/deploy-wporg-svn.sh 1.0.5
+bash scripts/deploy-wporg-svn.sh 1.0.5
+```
