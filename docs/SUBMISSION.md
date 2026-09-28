@@ -13,7 +13,7 @@ separate project.
 ## Ready
 
 - [x] Plugin code (phases 0–7), PHPCS / PHPStan / PHPUnit green locally
-- [x] `readme.txt` (External services, Privacy, FAQ, changelog through 1.0.1)
+- [x] `readme.txt` (External services, Privacy, FAQ, changelog through 1.0.4)
 - [x] `README.md`, `SECURITY.md`, `CONTRIBUTING.md`, `LICENSE`
 - [x] Directory icons + banners + screenshots 1–4 in `.wordpress-org/`
 - [x] Family GitHub README (OG logo, About Shadow Software, Also by)
@@ -38,6 +38,13 @@ Paste this into the WordPress.org submission / review private testing notes
 | Password | *(in `000-creds/.env.plugin-sandboxes` — copy when submitting)* |
 
 The How-to admin screen also points reviewers at support@shadowsoftware.com.
+
+## Packaging and review hardening
+
+- [x] Public AGT terms and privacy URLs verified as `/terms-of-service` and `/privacy-policy`.
+- [x] Release pruning removes OpenAPI generator metadata and SDK development files.
+- [x] AGT sync is product/catalogue-only; it does not update WordPress user identity fields or administer the site remotely.
+- [x] WordPress.org review findings and preventive actions recorded in `docs/INCIDENTS/2026-09-28-wporg-review-hardening.md`.
 
 ## Still blocking submission
 

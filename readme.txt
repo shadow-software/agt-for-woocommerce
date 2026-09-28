@@ -5,7 +5,7 @@ Tags: woocommerce, inventory-sync, marketplace, multi-channel, oauth
 Requires at least: 7.0
 Tested up to: 7.1
 Requires PHP: 8.5
-Stable tag: 1.0.3
+Stable tag: 1.0.4
 WC requires at least: 8.2
 WC tested up to: 11.0
 License: GPLv2 or later
@@ -239,6 +239,9 @@ The only data that leaves your store is the product information described under
 
 == Changelog ==
 
+= 1.0.4 =
+* Exclude OpenAPI generator metadata from the WordPress.org distribution archive.
+
 = 1.0.3 =
 * WordPress.org readme and plugin header: neutral marketplace language (no industry
   tags or category-specific terms in directory copy).
@@ -265,6 +268,9 @@ The only data that leaves your store is the product information described under
   when the item sells on American Gun Trader.
 
 == Upgrade Notice ==
+
+= 1.0.4 =
+Packaging-only update: removes SDK generator metadata rejected by WordPress.org.
 
 = 1.0.3 =
 Readme and directory copy only — no database or sync behaviour changes.
