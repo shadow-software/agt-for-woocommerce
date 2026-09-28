@@ -42,10 +42,11 @@ final class Notices {
 			return;
 		}
 
-		// Do not shout on our own settings screen; it says all of this in place.
 		$screen = get_current_screen();
 
-		if ( $screen instanceof \WP_Screen && false !== strpos( $screen->id, SettingsPage::SLUG ) ) {
+		// Keep notices on the AGT screen. A plugin-wide admin banner is disruptive
+		// and is not useful on unrelated Dashboard, Posts, or WooCommerce screens.
+		if ( ! $screen instanceof \WP_Screen || 'woocommerce_page_' . SettingsPage::SLUG !== $screen->id ) {
 			return;
 		}
 

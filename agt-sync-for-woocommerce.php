@@ -3,7 +3,7 @@
  * Plugin Name:       AGT Sync for WooCommerce
  * Plugin URI:        https://github.com/shadow-software/agt-for-woocommerce
  * Description:       Sync WooCommerce products to an external marketplace and keep them in step. When an item sells on the platform, the WooCommerce product is set out of stock automatically — so you never sell the same product twice. Free and open source; requires an American Gun Trader seller account.
- * Version:           1.0.5
+ * Version:           1.0.6
  * Requires at least: 7.0
  * Requires PHP:      8.5
  * Requires Plugins:  woocommerce
@@ -24,7 +24,7 @@ defined( 'ABSPATH' ) || exit;
 
 // Keep in lockstep with the "Version:" header above and readme.txt's
 // "Stable tag:" + changelog.
-define( 'AGT_SYNC_VERSION', '1.0.5' );
+define( 'AGT_SYNC_VERSION', '1.0.6' );
 define( 'AGT_SYNC_FILE', __FILE__ );
 define( 'AGT_SYNC_PATH', plugin_dir_path( __FILE__ ) );
 define( 'AGT_SYNC_URL', plugin_dir_url( __FILE__ ) );
@@ -172,8 +172,8 @@ add_action(
 
 /**
  * Boot the plugin once all plugins are loaded, but only when WooCommerce is
- * active. If WooCommerce is missing, show an admin notice and stand down so the
- * site never fatals.
+ * active. If WooCommerce is missing, show a scoped admin notice and stand down
+ * so the site never fatals.
  *
  * @return void
  */
@@ -184,6 +184,16 @@ add_action(
 			add_action(
 				'admin_notices',
 				static function () {
+					if ( ! current_user_can( 'manage_woocommerce' ) ) {
+						return;
+					}
+
+					$screen = get_current_screen();
+
+					if ( ! $screen instanceof \WP_Screen || 'woocommerce_page_agt-sync' !== $screen->id ) {
+						return;
+					}
+
 					echo '<div class="notice notice-error"><p>';
 					echo esc_html__( 'AGT Sync for WooCommerce requires WooCommerce to be installed and active.', 'agt-sync-for-woocommerce' );
 					echo '</p></div>';

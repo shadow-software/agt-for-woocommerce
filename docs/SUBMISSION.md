@@ -13,13 +13,13 @@ separate project.
 ## Ready
 
 - [x] Plugin code (phases 0–7), PHPCS / PHPStan / PHPUnit green locally
-- [x] `readme.txt` (External services, Privacy, FAQ, changelog through 1.0.5)
+- [x] `readme.txt` (External services, Privacy, FAQ, changelog through 1.0.6)
 - [x] `README.md`, `SECURITY.md`, `CONTRIBUTING.md`, `LICENSE`
 - [x] Directory icons + banners + screenshots 1–4 in `.wordpress-org/`
 - [x] Family GitHub README (OG logo, About Shadow Software, Also by)
 - [x] `languages/agt-sync-for-woocommerce.pot`
 - [x] CI: lint, stan, test, Plugin Check workflows
-- [x] Runtime Composer dep: `shadow-software/agt-php-sdk` ^0.2 on Packagist
+- [x] Runtime Composer dep: `shadow-software/agt-php-sdk` ^3.10 on Packagist
 - [x] `composer.json` shipped alongside `vendor/`
 - [x] OAuth `redirect_uri` single-encoded (RFC 6749)
 - [x] ABSPATH guards on silence `index.php` files
@@ -60,7 +60,7 @@ Sandbox login verified 2026-08-02 (302 → `/dashboard`).
 
 ## How to submit
 
-1. Tag matching the current `Stable tag` / header / `AGT_SYNC_VERSION` (`1.0.5`).
+1. Tag matching the current `Stable tag` / header / `AGT_SYNC_VERSION` (`1.0.6`).
 2. Run the local release-layout Plugin Check gate and confirm it is green.
 3. With SVN secrets set, the tag push deploys to
    `plugins.svn.wordpress.org/agt-sync-for-woocommerce`.
@@ -71,6 +71,6 @@ The laptop SVN publisher is available for the first approved release and later
 updates:
 
 ```bash
-DRY_RUN=1 bash scripts/deploy-wporg-svn.sh 1.0.5
-bash scripts/deploy-wporg-svn.sh 1.0.5
+DRY_RUN=1 bash scripts/deploy-wporg-svn.sh 1.0.6
+bash scripts/deploy-wporg-svn.sh 1.0.6
 ```

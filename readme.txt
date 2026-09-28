@@ -5,7 +5,7 @@ Tags: woocommerce, inventory-sync, marketplace, multi-channel, oauth
 Requires at least: 7.0
 Tested up to: 7.1
 Requires PHP: 8.5
-Stable tag: 1.0.5
+Stable tag: 1.0.6
 WC requires at least: 8.2
 WC tested up to: 11.0
 License: GPLv2 or later
@@ -244,6 +244,10 @@ The only data that leaves your store is the product information described under
 
 == Changelog ==
 
+= 1.0.6 =
+* Scope operational admin notices to the AGT Sync settings screen and update the
+  bundled AGT PHP SDK to 3.10.0.
+
 = 1.0.5 =
 * Sync WooCommerce stock quantity and availability to American Gun Trader for entitled
   FFL dealers, including the AGT-sale writeback path.
@@ -277,6 +281,10 @@ The only data that leaves your store is the product information described under
   when the item sells on American Gun Trader.
 
 == Upgrade Notice ==
+
+= 1.0.6 =
+Admin notices are limited to the AGT Sync settings screen; the bundled SDK has
+also been updated to 3.10.0.
 
 = 1.0.5 =
 Entitled FFL dealers can keep American Gun Trader inventory quantities and stock state
