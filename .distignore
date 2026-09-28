@@ -44,3 +44,4 @@ Thumbs.db
 
 # Internal planning docs — repo-only, never ship.
 /docs
+/scripts
