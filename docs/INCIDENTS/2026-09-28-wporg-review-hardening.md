@@ -1,6 +1,6 @@
 # WordPress.org review hardening — AGT preventive pass
 
-Date recorded: 2026-09-28  
+Date recorded: 2026-09-28
 Reason: apply the DabDash review lessons before AGT submission/review.
 
 ## Cross-plugin controls audited
