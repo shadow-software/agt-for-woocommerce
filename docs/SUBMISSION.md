@@ -59,8 +59,8 @@ Sandbox login verified 2026-08-02 (302 → `/dashboard`).
 
 ## How to submit
 
-1. Tag matching `Stable tag` / header / `AGT_SYNC_VERSION` (e.g. `1.0.1`).
-2. Confirm Plugin Check job is green on that commit.
+1. Tag matching the current `Stable tag` / header / `AGT_SYNC_VERSION` (`1.0.4`).
+2. Run the local release-layout Plugin Check gate and confirm it is green.
 3. With SVN secrets set, the tag push deploys to
    `plugins.svn.wordpress.org/agt-sync-for-woocommerce`.
 4. Include the sandbox credentials from `000-creds/.env.plugin-sandboxes` in the
