@@ -111,11 +111,11 @@ final class Puller {
 		delete_option( self::BULK_SOLD_FLAG );
 
 		foreach ( $tracked as $listing_id => $product_id ) {
-			if ( ! isset( $statuses[ $listing_id ] ) || ! is_array( $statuses[ $listing_id ] ) ) {
-				continue;
+			if ( isset( $statuses[ $listing_id ] ) && is_array( $statuses[ $listing_id ] ) ) {
+				$this->apply( (int) $product_id, $statuses[ $listing_id ] );
 			}
 
-			$this->apply( (int) $product_id, $statuses[ $listing_id ] );
+			Reviews::sync( (int) $product_id, (string) $listing_id, $this->client );
 		}
 
 		// A scheduled status poll is also the catalogue's safety net for stock

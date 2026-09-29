@@ -47,6 +47,9 @@ if ( ! class_exists( 'WC_Product' ) ) {
 		public function get_price() {}
 		public function get_weight() {}
 		public function get_meta( $key = '' ) {}
+		public function update_meta_data( $key = '', $value = '', $unique = false ) {}
+		public function delete_meta_data( $key = '' ) {}
+		public function save_meta_data() {}
 		public function get_attribute( $name = '' ) {}
 		public function get_category_ids() {}
 		public function get_image_id() {}
