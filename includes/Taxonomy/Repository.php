@@ -48,14 +48,10 @@ final class Repository {
 		}
 
 		try {
-			$model     = \AgtSync\Api\SdkFactory::account()->dealerApiTaxonomy();
-			$sanitized = \ShadowSoftware\Agt\ObjectSerializer::sanitizeForSerialization( $model );
-
-			if ( is_object( $sanitized ) ) {
-				$sanitized = (array) $sanitized;
-			}
-
-			$response = is_array( $sanitized ) ? $sanitized : array();
+			// The generated SDK does not attach the OAuth bearer token to these
+			// operations. Client owns auth, token refresh, rate limiting and the
+			// plugin's ApiException contract, so use it for this read path too.
+			$response = ( new \AgtSync\Api\Client() )->get( '/taxonomy' );
 			$taxonomy = isset( $response['data'] ) && is_array( $response['data'] ) ? $response['data'] : $response;
 
 			if ( ! empty( $taxonomy ) ) {
@@ -63,12 +59,6 @@ final class Repository {
 			}
 
 			return $taxonomy;
-		} catch ( \ShadowSoftware\Agt\ApiException $e ) {
-			Logger::warn( 'Could not refresh the American Gun Trader taxonomy: ' . $e->getMessage() );
-
-			$cached = get_transient( self::TRANSIENT );
-
-			return is_array( $cached ) ? $cached : array();
 		} catch ( ApiException $e ) {
 			Logger::warn( 'Could not refresh the American Gun Trader taxonomy: ' . $e->getMessage() );
 

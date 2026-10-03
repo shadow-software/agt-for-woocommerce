@@ -192,23 +192,11 @@ final class OAuthClient {
 	 * @throws ApiException When the call fails.
 	 */
 	public static function refresh_account(): array {
-		try {
-			$model     = \AgtSync\Api\SdkFactory::account()->dealerApiMe();
-			$sanitized = \ShadowSoftware\Agt\ObjectSerializer::sanitizeForSerialization( $model );
-
-			if ( is_object( $sanitized ) ) {
-				$sanitized = (array) $sanitized;
-			}
-
-			$response = is_array( $sanitized ) ? $sanitized : array();
-		} catch ( \ShadowSoftware\Agt\ApiException $e ) {
-			throw ApiException::make(
-				esc_html( $e->getMessage() ),
-				(int) $e->getCode(),
-				'',
-				array()
-			);
-		}
+		// Use the plugin transport here rather than calling the generated SDK
+		// directly. The SDK's generated dealer operations do not attach the
+		// bearer token from Configuration, while Client centralises auth and
+		// refresh handling for every dealer API request.
+		$response = ( new \AgtSync\Api\Client() )->get( '/me' );
 
 		$account = isset( $response['data'] ) && is_array( $response['data'] ) ? $response['data'] : $response;
 
