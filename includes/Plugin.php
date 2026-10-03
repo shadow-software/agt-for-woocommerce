@@ -78,6 +78,75 @@ final class Plugin {
 		add_filter( 'plugin_row_meta', array( $this, 'plugin_row_meta' ), 10, 2 );
 
 		$this->register_product_hooks();
+		$this->register_review_meta();
+	}
+
+	/**
+	 * Register the public review projection for authenticated product REST reads.
+	 *
+	 * The sync worker writes these values through WooCommerce's product API. REST
+	 * exposure is deliberately read-only to callers without product edit access,
+	 * so an unauthenticated request cannot read or overwrite even the public
+	 * projection by guessing a product id.
+	 *
+	 * @return void
+	 */
+	private function register_review_meta(): void {
+		$can_edit_product = static function ( $allowed, string $meta_key, int $post_id ): bool {
+			return current_user_can( 'edit_post', $post_id );
+		};
+
+		register_post_meta(
+			'product',
+			Sync\Reviews::REVIEWS_META,
+			array(
+				'single'        => true,
+				'type'          => 'array',
+				'show_in_rest'  => array(
+					'schema' => array(
+						'type'  => 'array',
+						'items' => array(
+							'type'                 => 'object',
+							'additionalProperties' => false,
+							'properties'           => array(
+								'id'             => array( 'type' => 'string' ),
+								'rating'         => array( 'type' => 'integer' ),
+								'title'          => array( 'type' => array( 'string', 'null' ) ),
+								'body'           => array( 'type' => array( 'string', 'null' ) ),
+								'author_display' => array( 'type' => 'string' ),
+								'created_at'     => array( 'type' => array( 'string', 'null' ) ),
+								'updated_at'     => array( 'type' => array( 'string', 'null' ) ),
+								'source'         => array( 'type' => 'string' ),
+							),
+						),
+					),
+				),
+				'auth_callback' => $can_edit_product,
+			)
+		);
+
+		register_post_meta(
+			'product',
+			Sync\Reviews::SUMMARY_META,
+			array(
+				'single'        => true,
+				'type'          => 'object',
+				'show_in_rest'  => array(
+					'schema' => array(
+						'type'                 => 'object',
+						'additionalProperties' => false,
+						'properties'           => array(
+							'source'     => array( 'type' => 'string' ),
+							'average'    => array( 'type' => 'number' ),
+							'count'      => array( 'type' => 'integer' ),
+							'updated_at' => array( 'type' => array( 'string', 'null' ) ),
+							'synced_at'  => array( 'type' => 'string' ),
+						),
+					),
+				),
+				'auth_callback' => $can_edit_product,
+			)
+		);
 	}
 
 	/**
