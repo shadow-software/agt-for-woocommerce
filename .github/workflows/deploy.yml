@@ -1,42 +1,349 @@
-name: Deploy to WordPress.org
+name: Deploy
 
-# Publishes a tagged release to the WordPress.org plugin directory
-# (SVN: https://plugins.svn.wordpress.org/agt-sync-for-woocommerce):
-#   * the installable plugin -> SVN trunk + a matching SVN tag (respecting
-#     .distignore / .gitattributes export-ignore), and
-#   * the directory assets (icon, banner, screenshot-N.png) from .wordpress-org/
-#     -> SVN assets/ (the 10up action moves them there automatically).
-#
-# Trigger: push a version tag matching the plugin's Stable tag, e.g.
-#   git tag 1.0.0 && git push origin 1.0.0
-# The tag must equal readme.txt's "Stable tag" and the plugin "Version:" header.
-#
-# Requires two repository secrets (Settings → Secrets and variables → Actions):
-#   SVN_USERNAME  — your WordPress.org account username
-#   SVN_PASSWORD  — your WordPress.org account password
-# Until those are set, this workflow simply no-ops on tag pushes.
-#
-# Runs in PARALLEL with release.yml (which builds the same lean ZIP from
-# `git archive` and attaches it to a GitHub Release). The two are independent: a
-# self-hosted store can install the GitHub Release ZIP without this deploy ever
-# running, and this deploy publishes to wp.org without needing the GitHub Release.
+# Ship: GitHub Release ZIP, WordPress.org SVN, live smoke, and SDK-driven bumps.
+# Manual workflow_dispatch inputs choose which job(s) run; version tags run release +
+# wp.org deploy + live smoke in parallel (when credentials/secrets allow).
+
 on:
   push:
     tags:
       - '[0-9]+.[0-9]+.[0-9]+'
       - '[0-9]+.[0-9]+.[0-9]+-*'
   workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing tag to (re)build a GitHub Release for'
+        required: false
+        type: string
+      sdk_version:
+        description: 'agt-php-sdk version to pick up (bump job only), e.g. 0.2.9'
+        required: false
+        type: string
+      run_live_smoke:
+        description: 'Run marksmansdigest.com live smoke (manual only)'
+        required: false
+        type: boolean
+        default: false
+  repository_dispatch:
+    types: [sdk-updated]
 
 permissions:
   contents: read
 
 concurrency:
-  group: deploy-${{ github.ref }}
+  group: deploy-${{ github.ref }}-${{ github.event_name }}
   cancel-in-progress: false
 
 jobs:
-  deploy:
+  bump-sdk:
+    name: Update SDK dependency and release if changed
+    if: >-
+      github.event_name == 'repository_dispatch'
+      || (github.event_name == 'workflow_dispatch' && inputs.sdk_version != '')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: master
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          tools: composer:v2
+
+      - name: Resolve the dispatched SDK version
+        id: sdk
+        run: |
+          set -euo pipefail
+          package="${{ github.event.client_payload.package }}"
+          if [ -n "$package" ] && [ "$package" != "shadow-software/agt-php-sdk" ]; then
+            echo "::notice::sdk-updated dispatch was for ${package}, not agt-php-sdk — nothing for this repo to do."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          version="${{ github.event.client_payload.version || inputs.sdk_version }}"
+          if [ -z "$version" ]; then
+            echo "::error::No SDK version in the dispatch payload or workflow input."
+            exit 1
+          fi
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+
+      - name: Record the currently locked agt-php-sdk version
+        id: before
+        if: steps.sdk.outputs.skip != 'true'
+        run: |
+          set -euo pipefail
+          before="$(jq -r '.packages[] | select(.name=="shadow-software/agt-php-sdk") | .version' composer.lock)"
+          echo "version=${before}" >> "$GITHUB_OUTPUT"
+
+      - name: Update the agt-php-sdk Composer dependency
+        if: steps.sdk.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.SDK_RELEASE_TOKEN }}
+          SDK_VERSION: ${{ steps.sdk.outputs.version }}
+        run: |
+          set -euo pipefail
+          if [ -n "$GH_TOKEN" ]; then
+            composer config --global github-oauth.github.com "$GH_TOKEN"
+          fi
+          IFS='.' read -r major minor _patch <<< "$SDK_VERSION"
+          if [ "$major" = "0" ]; then
+            constraint="^${major}.${minor}"
+          else
+            constraint="^${major}.0"
+          fi
+          composer require "shadow-software/agt-php-sdk:${constraint}" --no-update --no-interaction
+          locked_version=""
+          for attempt in 1 2 3 4 5; do
+            composer update shadow-software/agt-php-sdk --no-interaction --no-progress --with-all-dependencies
+            locked_version="$(jq -r '.packages[] | select(.name=="shadow-software/agt-php-sdk") | .version' composer.lock)"
+            if [ "$locked_version" = "$SDK_VERSION" ]; then
+              break
+            fi
+            echo "Attempt ${attempt}: composer resolved ${locked_version:-<none>}, waiting for Packagist to index ${SDK_VERSION}..."
+            sleep 15
+          done
+          if [ "$locked_version" != "$SDK_VERSION" ]; then
+            echo "::warning::Composer never resolved exactly ${SDK_VERSION} (got '${locked_version:-<none>}') after 5 attempts."
+          fi
+
+      - name: Stop here if the locked SDK version didn't actually change
+        id: diff
+        if: steps.sdk.outputs.skip != 'true'
+        run: |
+          set -euo pipefail
+          after="$(jq -r '.packages[] | select(.name=="shadow-software/agt-php-sdk") | .version' composer.lock)"
+          if [ "${{ steps.before.outputs.version }}" = "$after" ]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "agt-php-sdk is already locked at ${after} — nothing to release."
+            git checkout -- composer.json composer.lock
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "agt-php-sdk ${{ steps.before.outputs.version }} -> ${after}"
+          fi
+
+      - name: Bump the plugin version (patch)
+        id: bump
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          new_version="$(bash .github/scripts/bump-plugin-version.sh "${{ steps.sdk.outputs.version }}")"
+          echo "version=${new_version}" >> "$GITHUB_OUTPUT"
+
+      - name: Commit and tag
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          set -euo pipefail
+          git config user.name "sdk-dispatch-bot"
+          git config user.email "noreply@shadowsoftware.com"
+          git add composer.json composer.lock agt-sync-for-woocommerce.php readme.txt
+          git commit -m "chore: bump agt-php-sdk to ${{ steps.sdk.outputs.version }}, release ${{ steps.bump.outputs.version }}"
+          git tag "${{ steps.bump.outputs.version }}"
+          git push origin HEAD "${{ steps.bump.outputs.version }}"
+
+      - name: Trigger GitHub Release build for the new tag
+        if: steps.diff.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NEW_VERSION: ${{ steps.bump.outputs.version }}
+        run: |
+          set -uo pipefail
+          for attempt in 1 2 3; do
+            if gh workflow run deploy.yml --ref "${NEW_VERSION}" -f tag="${NEW_VERSION}"; then
+              echo "Triggered Deploy (release) for ${NEW_VERSION}."
+              exit 0
+            fi
+            echo "Attempt ${attempt}: Deploy release dispatch failed, retrying..."
+            sleep 5
+          done
+          echo "::warning::Could not trigger Deploy release for ${NEW_VERSION} after 3 attempts. Re-run Deploy manually with tag=${NEW_VERSION}."
+
+      - name: Trigger WordPress.org deploy for the new tag
+        if: steps.diff.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NEW_VERSION: ${{ steps.bump.outputs.version }}
+        run: |
+          set -uo pipefail
+          for attempt in 1 2 3; do
+            if gh workflow run deploy.yml --ref "${NEW_VERSION}"; then
+              echo "Triggered Deploy (wp.org) for ${NEW_VERSION}."
+              exit 0
+            fi
+            echo "Attempt ${attempt}: Deploy wp.org dispatch failed, retrying..."
+            sleep 5
+          done
+          echo "::warning::Could not trigger Deploy wp.org for ${NEW_VERSION} after 3 attempts. Re-run Deploy manually with workflow_dispatch."
+
+  release:
+    name: Build ZIP and publish GitHub Release
+    if: >-
+      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/'))
+      || (github.event_name == 'workflow_dispatch' && inputs.tag != '')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+
+      - name: Resolve the version
+        id: version
+        run: |
+          version="${{ github.event.inputs.tag || github.ref_name }}"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "Building release for version: ${version}"
+
+      - name: Verify the tag matches the plugin version everywhere
+        run: |
+          set -euo pipefail
+          tag="${{ steps.version.outputs.version }}"
+
+          header="$(grep -oE '^\s*\*\s*Version:\s*\S+' agt-sync-for-woocommerce.php | awk '{print $NF}')"
+          const="$(grep -oE "AGT_SYNC_VERSION',\s*'[^']+'" agt-sync-for-woocommerce.php | grep -oE "'[0-9][^']*'" | tr -d "'")"
+          stable="$(grep -oE '^Stable tag:\s*\S+' readme.txt | awk '{print $NF}')"
+
+          echo "tag=${tag}  header=${header}  const=${const}  stable_tag=${stable}"
+
+          fail=0
+          [ "$header" = "$tag" ] || { echo "::error::Plugin header Version ($header) != tag ($tag)"; fail=1; }
+          [ "$const"  = "$tag" ] || { echo "::error::AGT_SYNC_VERSION ($const) != tag ($tag)"; fail=1; }
+          [ "$stable" = "$tag" ] || { echo "::error::readme.txt Stable tag ($stable) != tag ($tag)"; fail=1; }
+
+          if [ "$fail" -ne 0 ]; then
+            echo "::error::Version mismatch. Bump every place to ${tag} before tagging."
+            exit 1
+          fi
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          tools: composer:v2
+
+      - name: Install runtime Composer dependencies
+        env:
+          GH_TOKEN: ${{ secrets.SDK_RELEASE_TOKEN }}
+        run: |
+          if [ -n "$GH_TOKEN" ]; then
+            composer config --global github-oauth.github.com "$GH_TOKEN"
+          fi
+          composer install --no-dev --prefer-dist --no-progress --no-interaction
+
+      - name: Build the lean installable ZIP
+        id: build
+        run: |
+          set -euo pipefail
+          slug="agt-sync-for-woocommerce"
+          version="${{ steps.version.outputs.version }}"
+          zip="${slug}.${version}.zip"
+          staging="${RUNNER_TEMP}/${slug}"
+
+          mkdir -p "$staging" dist
+          rsync -a --exclude-from=.distignore ./ "$staging/"
+          bash .github/prune-vendor-dev.sh "$staging"
+          test -f "$staging/vendor/autoload.php"
+          test -f "$staging/agt-sync-for-woocommerce.php"
+
+          (
+            cd "${RUNNER_TEMP}"
+            zip -r "${GITHUB_WORKSPACE}/dist/${zip}" "$slug"
+          )
+
+          echo "zip=dist/${zip}" >> "$GITHUB_OUTPUT"
+          echo "Built dist/${zip}"
+
+      - name: Verify the ZIP is lean and installable
+        run: |
+          set -euo pipefail
+          zip="${{ steps.build.outputs.zip }}"
+
+          echo "── ZIP contents (head) ──"
+          unzip -l "$zip" | head -60
+
+          unzip -l "$zip" | grep -q 'agt-sync-for-woocommerce/agt-sync-for-woocommerce.php' \
+            || { echo "::error::Main plugin file missing from the ZIP"; exit 1; }
+          unzip -l "$zip" | grep -q 'agt-sync-for-woocommerce/vendor/autoload.php' \
+            || { echo "::error::vendor/autoload.php missing — SDK not packaged"; exit 1; }
+
+          if unzip -l "$zip" | grep -Eq 'agt-sync-for-woocommerce/(tests/|docs/|\.github|composer\.lock|phpcs|phpstan|phpunit|\.distignore|\.gitattributes|\.wordpress-org|README\.md|CONTRIBUTING\.md|SECURITY\.md)'; then
+            echo "::error::Development or repo files leaked into the installable ZIP"
+            exit 1
+          fi
+
+          unzip -l "$zip" | grep -q 'agt-sync-for-woocommerce/composer.json' \
+            || { echo "::error::composer.json missing — required alongside vendor/"; exit 1; }
+          if unzip -l "$zip" | grep -q 'git_push.sh'; then
+            echo "::error::git_push.sh leaked into ZIP — wp.org will reject the upload"
+            exit 1
+          fi
+
+          echo "ZIP is lean and installable."
+
+      - name: Extract release notes from the changelog
+        id: notes
+        run: |
+          set -euo pipefail
+          version="${{ steps.version.outputs.version }}"
+
+          body="$(bash .github/extract-changelog.sh "$version" readme.txt || true)"
+          if [ -z "$body" ]; then
+            body="See the changelog in readme.txt."
+          fi
+
+          wp_org_url="https://wordpress.org/plugins/agt-sync-for-woocommerce/"
+          if curl -fsS -o /dev/null "$wp_org_url"; then
+            wp_org_line="**Also on WordPress.org:** ${wp_org_url}"
+          else
+            wp_org_line="**Coming soon to WordPress.org.** Not yet published — install from the ZIP below for now."
+          fi
+
+          {
+            echo "## AGT Sync for WooCommerce ${version}"
+            echo
+            echo "$body"
+            echo
+            echo "---"
+            echo
+            echo "**Install:** download \`agt-sync-for-woocommerce.${version}.zip\` below, then in your WordPress admin go to **Plugins → Add New → Upload Plugin**, choose the ZIP, and click **Install Now**. Requires WooCommerce and an American Gun Trader dealer account."
+            echo
+            echo "$wp_org_line"
+            echo
+            echo "**Documentation & source:** https://github.com/shadow-software/agt-for-woocommerce#readme"
+            echo
+            echo "Developed & maintained by [Shadow Software LLC](https://shadowsoftware.com/)."
+          } > release-notes.md
+
+          echo "Wrote release notes:"
+          cat release-notes.md
+
+      - name: Publish the GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ steps.version.outputs.version }}
+          name: ${{ steps.version.outputs.version }}
+          body_path: release-notes.md
+          files: ${{ steps.build.outputs.zip }}
+          draft: false
+          prerelease: ${{ contains(steps.version.outputs.version, '-') }}
+          fail_on_unmatched_files: true
+
+  wporg-deploy:
     name: Publish to WordPress.org
+    if: >-
+      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/'))
+      || (github.event_name == 'workflow_dispatch'
+          && inputs.tag == ''
+          && inputs.sdk_version == ''
+          && inputs.run_live_smoke != true)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -85,10 +392,94 @@ jobs:
           SLUG: agt-sync-for-woocommerce
           ASSETS_DIR: .wordpress-org
 
-      # Keep a copy of the exact ZIP that was published to wp.org for auditing.
       - name: Upload published ZIP artifact
         if: steps.guard.outputs.ready == 'true'
         uses: actions/upload-artifact@v7
         with:
           name: agt-sync-for-woocommerce-${{ github.ref_name }}
           path: ${{ steps.deploy.outputs.zip-path }}
+
+  live-smoke:
+    name: marksmansdigest.com smoke
+    if: >-
+      (github.event_name == 'workflow_dispatch' && inputs.run_live_smoke == true)
+      || (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/'))
+    runs-on: ubuntu-latest
+    env:
+      SMOKE_PLUGIN_SLUG: agt-sync-for-woocommerce
+      SMOKE_WP_PATH: ${{ secrets.SMOKE_WP_PATH }}
+      SMOKE_SSH_HOST: ${{ secrets.SMOKE_SSH_HOST }}
+      SMOKE_SITE_URL: ${{ secrets.SMOKE_SITE_URL }}
+      SMOKE_WP_USER: ${{ secrets.SMOKE_WP_USER }}
+      SMOKE_WP_APP_PASSWORD: ${{ secrets.SMOKE_WP_APP_PASSWORD }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Guard — smoke secrets present
+        env:
+          SMOKE_SSH_KEY: ${{ secrets.SMOKE_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          missing=0
+          for v in SMOKE_SSH_HOST SMOKE_SSH_KEY SMOKE_WP_PATH SMOKE_SITE_URL; do
+            if [ -z "${!v:-}" ]; then
+              echo "::error::Missing $v"
+              missing=1
+            fi
+          done
+          [ "$missing" -eq 0 ]
+
+      - name: Write SSH key
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          install -m 600 /dev/null ~/.ssh/smoke_key
+          printf '%s\n' "${{ secrets.SMOKE_SSH_KEY }}" > ~/.ssh/smoke_key
+          echo "SMOKE_SSH_KEY=$HOME/.ssh/smoke_key" >> "$GITHUB_ENV"
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          tools: composer:v2
+
+      - name: Install runtime dependencies
+        env:
+          GH_TOKEN: ${{ secrets.SDK_RELEASE_TOKEN }}
+          COMPOSER_AUTH: ${{ secrets.COMPOSER_AUTH }}
+        run: |
+          if [ -n "$GH_TOKEN" ]; then
+            composer config --global github-oauth.github.com "$GH_TOKEN"
+          elif [ -n "$COMPOSER_AUTH" ]; then
+            echo "$COMPOSER_AUTH" > "$HOME/.composer/auth.json"
+          fi
+          composer install --no-dev --prefer-dist --no-progress --no-interaction
+
+      - name: Build release ZIP
+        id: build
+        run: |
+          set -euo pipefail
+          slug=agt-sync-for-woocommerce
+          staging="$(bash .github/scripts/build-release-layout.sh)"
+          zip="dist/${slug}.smoke.zip"
+          mkdir -p dist
+          ( cd "$(dirname "$staging")" && zip -r "$GITHUB_WORKSPACE/$zip" "$(basename "$staging")" )
+          echo "zip=$zip" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy to marksmansdigest.com
+        id: deploy
+        env:
+          SMOKE_ZIP_FILE: ${{ steps.build.outputs.zip }}
+        run: bash .github/scripts/live-smoke-deploy.sh
+
+      - name: REST smoke
+        run: bash tests/live-smoke/rest-smoke.sh
+
+      - name: Remote eval-file smoke
+        run: bash tests/live-smoke/remote-smoke.sh tests/live-smoke/run-smoke.php
+
+      - name: Roll back plugin on failure
+        if: failure() && steps.deploy.outcome == 'success'
+        run: bash .github/scripts/live-smoke-rollback.sh
