@@ -27,7 +27,7 @@ Documented 2026-08-24: `shadow-agent-markdown/ops/CI-RUNNER.md` §Billing report
 | Workflow | Trigger | Jobs | Runner |
 |----------|---------|------|--------|
 | `ci.yml` | push/PR `master` | quality + plugin-check + bump-script test | `ubuntu-latest` |
-| `release.yml` | version tags | ZIP build | `ubuntu-latest` |
+| `deploy.yml` | version tags / dispatch | ZIP build + wp.org / smoke | `ubuntu-latest` |
 | `deploy.yml` | version tags | WP.org SVN | `ubuntu-latest` |
 | `bump-sdk.yml` | `repository_dispatch` | SDK bump | `ubuntu-latest` |
 

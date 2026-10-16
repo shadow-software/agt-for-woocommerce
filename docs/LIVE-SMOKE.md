@@ -4,7 +4,7 @@ Pre–wp.org gate. Full registry: `shadow-agent-markdown/registry/PLUGIN-SMOKE-C
 
 ## CI
 
-Workflow: `.github/workflows/live-smoke.yml`  
+Workflow: `.github/workflows/deploy.yml` (job with `run_live_smoke: true` on `workflow_dispatch`)  
 Triggers: semver tags, `workflow_dispatch`.
 
 Requires OAuth Connect on the digest site (one-time). Smoke calls `/me` and
